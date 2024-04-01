@@ -17,78 +17,59 @@ class Controller:
         self.logger = logging.Logger(__name__)
 
     @classmethod
-    def from_file(cls, controller_path: str, docker_client: DockerClient):
-        config = yaml.safe_load(open(controller_path, "r"))
-        services = config.get("services", None)
+    def from_file(cls, config_path: str, docker_client: DockerClient):
+        config = yaml.safe_load(open(config_path, "r"))["controller"]
+        root_path = config.get("path", None)
+        nodes = config.get("nodes", {})
 
         controller = cls(docker_client)
-        for node_name, data in services.items():
+        for node_name, setup in nodes.items():
             try:
-                path = cls.get_node_path(data, controller_path)
-                if node := Node.from_dict(path, data):
+                node_path = os.path.join(root_path, setup["path"])
+                node_config = yaml.safe_load(open(os.path.join(str(node_path), setup["config"]), "r"))
+
+                if node := Node.from_dict(node_config, node_path):
                     controller.nodes[node_name] = node
             except ImageNotFound:
                 continue
 
         return controller
 
-    @staticmethod
-    def get_node_path(data, controller_path):
-        context = data['build'].get('context')
-        if context == ".":
-            node_path = os.path.dirname(controller_path)
-        else:
-            node_path = os.path.join(os.path.dirname(controller_path), data['build'].get('context'))
-        return node_path
-
     @property
     def nodes(self) -> dict[str, Node]:
         return self._nodes
 
-    def get_interface(self, node: str | Node, name: str = None):
-        if isinstance(node, str):
-            node = self.nodes[node]
-        return node.get_interface(name)
-
-    def build_node(self, node: Node):
-        for depend_node_name in node.config.depends_on:
+    def build_node(self, node: Node) -> dict:
+        for depend_node_tag in node.config.build.depends_on:
+            depend_node_name = depend_node_tag.split(":")[0]
             depend_node = self.nodes[depend_node_name]
             self.build_node(depend_node)
-        return node.build(self.docker_client)
+        response, _ = node.build(self.docker_client)
+        return response
 
-    def start_node(self, node: Node):
+    def start_node(self, node: Node) -> dict:
         return node.start(self.docker_client)
 
     @staticmethod
-    def stop_node(node: Node):
+    def stop_node(node: Node) -> dict:
         return node.stop()
 
     def status(self):
         status = {
             "nodes": {
-                "stopped": [],
-                "running": []
+                node_name: node.status for node_name, node in self.nodes.items()
             },
             "docker-client-containers": {
                 container.name: container.status for container in self.docker_client.containers.list()
             }
         }
-        for node_name, node in self.nodes.items():
-            try:
-                if node.alive:
-                    status["nodes"]["running"].append(node_name)
-                else:
-                    status["nodes"]["stopped"].append(node_name)
-            except RuntimeError:
-                self.logger.warning(f"Node {node_name} not started")
-                status["nodes"]["stopped"].append(node_name)
 
         return status
 
     @property
-    def info(self):
+    async def info(self):
         return {
-            "nodes": {node_name: node.info for node_name, node in self.nodes.items()},
+            "nodes": {node_name: await node.info for node_name, node in self.nodes.items()},
         }
 
     def stop(self):

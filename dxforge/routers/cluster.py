@@ -23,7 +23,7 @@ def get_node(controller: Controller, node: str) -> Node:
 
 @router.get("/")
 async def get_info():
-    return forge.orchestrator.info
+    return await forge.orchestrator.info
 
 
 @router.get("/{controller}")
@@ -31,7 +31,7 @@ async def get_controller_info(controller: str):
     if not (controller := get_controller(controller)):
         raise HTTPException(status_code=404, detail="controller not found")
 
-    return controller.info
+    return await controller.info
 
 
 @router.get("/{controller}/status")
@@ -47,7 +47,16 @@ async def get_node_info(controller: str,
     controller = get_controller(controller)
     node = get_node(controller, node)
 
-    return node.info
+    return await node.info
+
+
+@router.get("/{controller}/status/{node}")
+async def get_node_status(controller: str,
+                          node: str):
+    controller = get_controller(controller)
+    node = get_node(controller, node)
+
+    return node.status
 
 
 @router.post("/{controller}/node/{node}")

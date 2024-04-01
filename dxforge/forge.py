@@ -10,7 +10,7 @@ from .utils import SingletonMeta
 
 class Forge(metaclass=SingletonMeta):
     def __init__(self,
-                 orchestrators: List[Orchestrator]):
+                 orchestrators: List[Orchestrator] = None):
         self._orchestrators = orchestrators
 
     @classmethod

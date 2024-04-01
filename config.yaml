@@ -1,6 +1,6 @@
 {
   "controllers": {
-    "feeds": "controllers/feeds/docker-compose.yaml",
-    "strategies": "controllers/strategies/docker-compose.yaml",
+    "feeds": "controllers/feeds/config.yaml",
+    "strategies": "controllers/strategies/config.yaml",
   }
 }
