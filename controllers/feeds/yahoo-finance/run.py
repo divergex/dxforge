@@ -1,4 +1,3 @@
-import os
 import time
 import yaml
 
@@ -6,14 +5,14 @@ import dxlib as dx
 
 
 def main():
-    config = yaml.safe_load(open("config.yaml", "r"))
+    config = yaml.safe_load(open("info.yaml", "r"))
     http_port = int(config["MarketInterface"]["http"]["port"])
     websocket_port = int(config["MarketInterface"]["ws"]["port"])
 
     logger = dx.InfoLogger()
-    interface = dx.MarketInterface(dx.YFinanceAPI())
-    http_server = dx.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
-    websocket_server = dx.WebsocketServer(host="0.0.0.0", port=websocket_port, logger=logger)
+    interface = dx.internal.MarketInterface(dx.external.yfinance.YFinanceAPI())
+    http_server = dx.servers.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
+    websocket_server = dx.servers.WebsocketServer(host="0.0.0.0", port=websocket_port, logger=logger)
 
     http_server.add_interface(interface)
     websocket_server.add_interface(interface)

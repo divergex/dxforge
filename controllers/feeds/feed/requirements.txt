@@ -1,2 +1,3 @@
 websocket-client==1.6.2
+yaml==3.13
 git+https://github.com/divergex/dxlib.git@main#egg=dxlib

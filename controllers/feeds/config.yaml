@@ -1,0 +1,13 @@
+controller:
+  name: "feeds"
+  path: "controllers/feeds/"
+  nodes:
+    feed:
+      config: "config.yaml"
+      path: "feed/"
+    yahoo-finance:
+      config: "config.yaml"
+      path: "yahoo-finance/"
+networks:
+  dxforge:
+    external: true

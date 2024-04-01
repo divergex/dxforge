@@ -1,0 +1,8 @@
+controller:
+  name: "strategies"
+#  strategy: "strategy/config.yaml"
+#  rsi-strategy: "rsi-strategy/config.yaml"
+
+networks:
+  dxforge:
+    external: true

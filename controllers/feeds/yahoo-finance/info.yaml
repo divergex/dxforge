@@ -1,0 +1,8 @@
+{
+  info: {
+    "MarketInterface": {
+      "http": { "port": 8001 },
+      "ws": { "port": 4001 }
+    }
+  },
+}

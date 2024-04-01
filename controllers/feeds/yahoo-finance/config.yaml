@@ -1,8 +1,14 @@
-{
-  info: {
-    "MarketInterface": {
-      "http": { "port": 8001 },
-      "ws": { "port": 4001 }
-    }
-  },
-}
+run:
+  image: yahoo-finance:latest
+  ports:
+    - "8001/tcp:8001"
+    - "4001/tcp"
+  networks:
+    - "dxforge"
+
+build:
+  depends_on:
+    - "feed:latest"
+  dockerfile: Dockerfile
+  context: .
+  tag: yahoo-finance:latest
