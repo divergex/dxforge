@@ -1,7 +1,12 @@
 controller:
   name: "strategies"
-#  strategy: "strategy/config.yaml"
-#  rsi-strategy: "rsi-strategy/config.yaml"
+  path: "controllers/strategies/"
+  strategy:
+    config: "strategy/config.yaml"
+    path: "strategy/"
+  rsi-strategy:
+    config: "rsi-strategy/config.yaml"
+    path: "rsi-strategy/"
 
 networks:
   dxforge:

@@ -1,0 +1,14 @@
+{
+  interfaces: {
+    "StrategyInterface": {
+      "http": { "port": 8001 },
+      "ws": { "port": 4001 }
+    }
+  },
+  external: {
+    "feeds": {
+      "yahoo-finance": "MarketInterface"
+    }
+  },
+  name: "rsi-strategy",
+}

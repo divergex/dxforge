@@ -1,0 +1,12 @@
+run:
+  ports:
+    - "8002/tcp:8002"
+    - "4001/tcp"
+  network: "dxforge"
+
+build:
+  tag: rsi-strategy:latest
+  depends_on:
+    - "strategy:latest"
+  dockerfile: Dockerfile
+  context: .

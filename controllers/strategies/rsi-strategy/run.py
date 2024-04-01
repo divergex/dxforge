@@ -1,6 +1,9 @@
-import asyncio
 import os
+import asyncio
 from typing import AsyncGenerator
+
+import requests
+import yaml
 
 import dxlib as dx
 from dxlib.interfaces.internal import MarketInterface
@@ -8,8 +11,16 @@ from dxlib.strategies.custom_strategies import RsiStrategy
 
 
 def main():
-    interface_port = int(os.environ.get("INTERFACE_PORT", 4001))
-    http_port = int(os.environ.get("HTTP_PORT"))
+    info = yaml.safe_load(open("info.yaml", "r"))
+    interfaces = info["interfaces"]
+    http_port = int(interfaces["StrategyInterface"]["http"]["port"])
+
+    external = info["external"]
+    m = external["feeds"]["yahoo-finance"]
+
+    m_info = requests.get(f"http://0.0.0.0:8000/cluster/feeds/node/yahoo-finance/").json()
+
+    m_port = m_info["interfaces"][m]["http"]["port"]
 
     strategy = RsiStrategy(field="price")
     market_interface = MarketInterface(host=f"0.0.0.0")
