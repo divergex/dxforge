@@ -5,9 +5,9 @@ import dxlib as dx
 
 
 def main():
-    config = yaml.safe_load(open("info.yaml", "r"))
-    http_port = int(config["MarketInterface"]["http"]["port"])
-    websocket_port = int(config["MarketInterface"]["ws"]["port"])
+    interfaces = yaml.safe_load(open("info.yaml", "r"))["interfaces"]
+    http_port = int(interfaces["MarketInterface"]["http"]["port"])
+    websocket_port = int(interfaces["MarketInterface"]["ws"]["port"])
 
     logger = dx.InfoLogger()
     interface = dx.internal.MarketInterface(dx.external.yfinance.YFinanceAPI())

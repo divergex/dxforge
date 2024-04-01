@@ -1,10 +1,8 @@
 run:
-  image: yahoo-finance:latest
   ports:
     - "8001/tcp:8001"
     - "4001/tcp"
-  networks:
-    - "dxforge"
+  network: "dxforge"
 
 build:
   depends_on:

@@ -7,6 +7,7 @@ controller:
       path: "feed/"
     yahoo-finance:
       config: "config.yaml"
+      info: "info.yaml"
       path: "yahoo-finance/"
 networks:
   dxforge:
