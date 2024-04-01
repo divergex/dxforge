@@ -47,7 +47,7 @@ async def get_node_info(controller: str,
     controller = get_controller(controller)
     node = get_node(controller, node)
 
-    return await node.info
+    return node.info
 
 
 @router.get("/{controller}/status/{node}")

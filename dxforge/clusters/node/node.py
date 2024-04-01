@@ -17,8 +17,9 @@ class Node:
     @classmethod
     def from_dict(cls,
                   config: dict = None,
-                  path=None) -> 'Node':
-        return cls(NodeConfig.from_config(config, path))
+                  path=None,
+                  info=None) -> 'Node':
+        return cls(NodeConfig.from_config(config, path, info))
 
     @property
     def client(self):
@@ -33,21 +34,13 @@ class Node:
         return self._config.build.tag
 
     @property
-    async def info(self):
-        uuid = list(self.instances.keys())
-
-        if not uuid:
-            return {}
-
-        uuid = uuid[0]
-
-        response = await self.client.get(f"http://{self.instances[uuid].ip}:8000/info")
-        return response.json()
+    def info(self):
+        return self._config.info
 
     @property
     def status(self):
         return {
-            "instances": {uuid: instance.alive for uuid, instance in self.instances.items()},
+            "created": {uuid: instance.status for uuid, instance in self.instances.items()},
         }
 
     def create_instance(self, uuid: str = None):
@@ -76,7 +69,8 @@ class Node:
         try:
             image = docker_client.images.build(
                 path=self._config.path,
-                tag=self._config.build.tag
+                tag=self._config.build.tag,
+                nocache=True,
             )
 
             return {

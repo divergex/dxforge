@@ -37,12 +37,10 @@ class NodeConfig(Config):
     @dataclass
     class RunConfig(Config):
         def __init__(self,
-                     image: str,
-                     ports: List[str],
+                     ports: List[str] = None,
                      network: str = None,
                      *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.image = image
             self._ports = ports
             self.network = network
 
@@ -53,15 +51,17 @@ class NodeConfig(Config):
     build: BuildConfig
     run: RunConfig
     path: str = None
+    info: dict = None
 
     @classmethod
     def from_config(cls,
                     config=None,
-                    path: str = None,):
+                    path: str = None,
+                    info: dict = None):
         build_config = config.get("build")
         build = cls.BuildConfig(**config.get("build")) if build_config else None
 
         run_config = config.get("run")
         run = cls.RunConfig(**config.get("run")) if run_config else None
 
-        return cls(build=build, run=run, path=path)
+        return cls(build=build, run=run, path=path, info=info)

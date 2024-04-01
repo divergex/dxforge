@@ -14,10 +14,8 @@ class Instance:
         self._image: Image | None = None
 
     @property
-    def alive(self):
-        if not self._container:
-            return False
-        return self._container.status == "running"
+    def status(self):
+        return self._container.status
 
     @property
     def ip(self):
@@ -33,7 +31,7 @@ class Instance:
 
     def start(self, docker_client: DockerClient) -> Container:
         container = docker_client.containers.run(
-            image=self.data.run.image,
+            image=self.data.build.tag,
             ports=self.data.run.ports,
             network=self.data.run.network if self.data.run.network != "host" else None,
             detach=True,

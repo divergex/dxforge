@@ -28,7 +28,12 @@ class Controller:
                 node_path = os.path.join(root_path, setup["path"])
                 node_config = yaml.safe_load(open(os.path.join(str(node_path), setup["config"]), "r"))
 
-                if node := Node.from_dict(node_config, node_path):
+                if setup.get("info", None):
+                    node_info = yaml.safe_load(open(os.path.join(str(node_path), setup["info"]), "r"))
+                else:
+                    node_info = None
+
+                if node := Node.from_dict(node_config, node_path, node_info):
                     controller.nodes[node_name] = node
             except ImageNotFound:
                 continue
@@ -67,9 +72,9 @@ class Controller:
         return status
 
     @property
-    async def info(self):
+    def info(self):
         return {
-            "nodes": {node_name: await node.info for node_name, node in self.nodes.items()},
+            "nodes": {node_name: node.info for node_name, node in self.nodes.items()},
         }
 
     def stop(self):
