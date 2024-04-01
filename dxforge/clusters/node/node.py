@@ -1,60 +1,53 @@
-import subprocess
-from typing import Tuple, Dict
+from typing import Dict, Tuple, Union
 from uuid import uuid4
 
 import httpx
 from docker import DockerClient
+from docker.models.images import Image
 
 from .instance import Instance
-from .node_data import NodeData
-
-
-def build(compose_file: str, service_name: str, docker):
-    if docker:
-        subprocess.run(['docker compose', '-f', compose_file, 'build', service_name])
-        image = docker.images.get(service_name)
-
-        return image
-    else:
-        raise NotImplementedError("No script manager implemented")
+from .node_config import NodeConfig
 
 
 class Node:
-    def __init__(self, config: NodeData, instance_config=None):
+    def __init__(self, config: NodeConfig):
         self._config = config
-        self.instance_config = instance_config
         self.instances: Dict[str, Instance] = {}
 
     @classmethod
-    def from_dict(cls, path, config: dict, instance_config=None) -> 'Node':
-        if ports := config.get("expose"):
-            ports = [int(port) for port in ports]
-        else:
-            ports = []
-        config = NodeData(
-            path=path,
-            image_tag=config.get("image"),
-            depends_on=config.get("depends_on"),
-            ports=ports,
-            env=config.get("env"),
-            network=config.get("network"),
-        )
-
-        return cls(config, instance_config)
+    def from_dict(cls,
+                  config: dict = None,
+                  path=None) -> 'Node':
+        return cls(NodeConfig.from_config(config, path))
 
     @property
     def client(self):
         return httpx.AsyncClient()
 
     @property
-    def config(self):
+    def config(self) -> NodeConfig:
         return self._config
 
     @property
-    def info(self):
+    def tag(self):
+        return self._config.build.tag
+
+    @property
+    async def info(self):
+        uuid = list(self.instances.keys())
+
+        if not uuid:
+            return {}
+
+        uuid = uuid[0]
+
+        response = await self.client.get(f"http://{self.instances[uuid].ip}:8000/info")
+        return response.json()
+
+    @property
+    def status(self):
         return {
             "instances": {uuid: instance.alive for uuid, instance in self.instances.items()},
-            "instance_config": self.instance_config
         }
 
     def create_instance(self, uuid: str = None):
@@ -65,32 +58,41 @@ class Node:
         return uuid
 
     def _run(self, func, *args, **kwargs):
-        success = set()
-        errors = {}
+        status = {}
         for uuid, instance in self.instances.items():
             try:
                 func(instance, *args, **kwargs)
-                success.add(str(uuid))
+                status[str(uuid)] = {
+                    "status": "success"
+                }
             except Exception as e:
-                errors[str(uuid)] = str(e)
-        return {
-            "success": success,
-            "errors": errors
-        }
+                status[str(uuid)] = {
+                    "status": "error",
+                    "error": str(e)
+                }
+        return status
 
-    def build(self, docker_client: DockerClient):
-        return self._run(Instance.build, docker_client)
+    def build(self, docker_client: DockerClient) -> Tuple[dict, Union[Image, None]]:
+        try:
+            image = docker_client.images.build(
+                path=self._config.path,
+                tag=self._config.build.tag
+            )
 
-    def start(self, docker_client: DockerClient):
+            return {
+                "status": "success",
+            }, image
+        except Exception as e:
+            return {
+                "status": "error",
+                "error": str(e)
+            }, None
+
+    def start(self, docker_client: DockerClient) -> dict:
         return self._run(Instance.start, docker_client)
 
-    def stop(self):
+    def stop(self) -> dict:
         return self._run(Instance.stop)
-
-    def get_interface(self, name=None) -> Tuple[int, str]:
-        if name is None:
-            raise NotImplementedError("No instance union implemented")
-        return self._config.ports[name], self.instances[name].info["host"]
 
     def log(self, uuid):
         return self.instances[uuid].logs()
