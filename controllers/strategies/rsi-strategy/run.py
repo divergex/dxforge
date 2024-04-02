@@ -1,4 +1,3 @@
-import os
 import asyncio
 from typing import AsyncGenerator
 
@@ -16,23 +15,25 @@ def main():
     http_port = int(interfaces["StrategyInterface"]["http"]["port"])
 
     external = info["external"]
-    m = external["feeds"]["yahoo-finance"]
+    required = external["feeds"]["yahoo-finance"]
 
-    m_info = requests.get(f"http://0.0.0.0:8000/cluster/feeds/node/yahoo-finance/").json()
+    m_info = requests.get(f"http://host.docker.internal:8000/cluster/feeds/node/yahoo-finance/").json()
+    m_status = requests.get(f"http://host.docker.internal:8000/cluster/feeds/status/yahoo-finance/").json()
 
-    m_port = m_info["interfaces"][m]["http"]["port"]
+    m_port = m_info["interfaces"][required]["http"]["port"]
+    m_host = list(m_status["instances"].values())[0]
 
     strategy = RsiStrategy(field="price")
-    market_interface = MarketInterface(host=f"0.0.0.0")
+    market_interface = MarketInterface(host=m_host)
 
     logger = dx.InfoLogger()
     executor = dx.Executor(strategy)
-    executor_interface = dx.ExecutorInterface(executor)
-    http_server = dx.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
+    executor_interface = dx.internal.ExecutorInterface(executor)
+    http_server = dx.servers.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
     http_server.add_interface(executor_interface)
     try:
         http_server.start()
-        quotes = market_interface.listen(market_interface.quote_stream, port=interface_port, retry=1)
+        quotes = market_interface.listen(market_interface.quote_stream, port=m_port, retry=1)
 
         def get_first_element_sync(async_gen):
             async def fetch_first_element():
