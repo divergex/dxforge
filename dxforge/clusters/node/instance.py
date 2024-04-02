@@ -29,15 +29,21 @@ class Instance:
 
         return None
 
-    def start(self, docker_client: DockerClient) -> Container:
-        container = docker_client.containers.run(
+    def create(self, docker_client: DockerClient) -> Container:
+        # TODO: --add-host=host.docker.internal:host-gateway
+        self._container = docker_client.containers.create(
             image=self.data.build.tag,
             ports=self.data.run.ports,
             network=self.data.run.network if self.data.run.network != "host" else None,
             detach=True,
         )
-        self._container = container
-        return container
+        return self._container
+
+    def start(self, docker_client: DockerClient):
+        if not self._container:
+            self.create(docker_client)
+        self._container.start()
+        self._container.reload()
 
     def stop(self):
         if self._container:

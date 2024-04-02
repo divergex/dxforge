@@ -40,7 +40,7 @@ class Node:
     @property
     def status(self):
         return {
-            "created": {uuid: instance.status for uuid, instance in self.instances.items()},
+            "instances": {uuid: instance.ip for uuid, instance in self.instances.items()},
         }
 
     def create_instance(self, uuid: str = None):
