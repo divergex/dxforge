@@ -4,36 +4,11 @@ from dotenv import load_dotenv
 
 import yaml
 import uvicorn
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
 
-from dxforge import Forge
+from dxforge import App, Forge
 
 
-class App(FastAPI):
-    def __init__(self, forge: Forge, origins=None, *args, **kwargs):
-        from dxforge.routers import cluster_router, root_router
-
-        super().__init__(*args, **kwargs)
-
-        if origins is None:
-            origins = [
-                "http://localhost:80",
-                "http://localhost:443",
-                "http://localhost:3000",
-                "http://localhost:8000",
-                "http://localhost:8080",
-            ]
-
-        self.add_middleware(
-
-        )
-
-        self.include_router(cluster_router.router, prefix="/cluster", tags=["cluster"])
-        self.include_router(root_router.router, tags=["root"])
-
-
-def main() -> FastAPI:
+def main() -> App:
     load_dotenv()
     config_file = os.getenv("CONFIG_FILE", "config.yaml")
     config = yaml.safe_load(open(config_file, "r"))
@@ -48,7 +23,7 @@ def main() -> FastAPI:
     """
 
     return App(
-        forge=forge,
+        forge,
         title="dxforge",
         description=description,
         summary="An API-based orchestration platform by DivergeX.",
@@ -85,5 +60,5 @@ else:
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await Forge().stop()
+    await app.forge.stop()
     print("Shutting down...")
