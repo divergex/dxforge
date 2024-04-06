@@ -18,6 +18,10 @@ class Instance:
         return self._container.status
 
     @property
+    def alive(self):
+        return self._container.status == "running"
+
+    @property
     def ip(self):
         if self._container:
             if self.data.run.network == "host":

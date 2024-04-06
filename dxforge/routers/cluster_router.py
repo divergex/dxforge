@@ -59,6 +59,33 @@ async def get_node_status(controller: str,
     return node.status
 
 
+class NodeInstruction:
+    def __init__(self, controller: Controller, node: Node):
+        self.controller = controller
+        self.node = node
+
+        self.instructions = {
+            "create": self.node.create_instance,
+            "build": self.controller.build_node,
+            "start": self.controller.start_node,
+            "stop": self.controller.stop_node,
+        }
+
+    @staticmethod
+    def get_kwargs(instructions, instruction):
+        if isinstance(instructions[instruction], dict):
+            return instructions[instruction]
+        return {}
+
+    def get_func(self, instruction):
+        return self.instructions.get(instruction, None)
+
+    def execute(self, instructions, instruction):
+        func = self.get_func(instruction)
+        kwargs = self.get_kwargs(instructions, instruction)
+        return func(**kwargs)
+
+
 @router.post("/{controller}/node/{node}")
 async def post_node_instruction(request: Request,
                                 controller: str,
@@ -71,36 +98,22 @@ async def post_node_instruction(request: Request,
     except JSONDecodeError:
         raise HTTPException(status_code=400, detail="invalid instruction or no body provided")
 
-    instructions = data.get("instructions", [])
+    instructions: dict = data.get("instructions", {})
 
     if not instructions:
         raise HTTPException(status_code=400, detail="no instructions provided")
 
-    if isinstance(instructions, str):
-        instructions = [instructions]
+    node_instruction = NodeInstruction(controller, node)
+    response = {}
 
-    try:
-        response = {}
-        if "create" in instructions:
-            status = str(node.create_instance())
-            response['create'] = status
-        if "build" in instructions:
-            status = controller.build_node(node)
-            response['build'] = status
-        if "start" in instructions:
-            status = controller.start_node(node)
-            response['start'] = status
-        if "stop" in instructions:
-            status = controller.stop_node(node)
-            response['stop'] = status
-        # if response is empty, no valid instructions were provided
-        if not response:
-            raise HTTPException(status_code=400, detail="invalid instruction")
-
-    except HTTPException as e:
-        raise e
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    for instruction in instructions:
+        try:
+            if instruction not in node_instruction.instructions:
+                raise HTTPException(status_code=400, detail=f"invalid instruction: {instruction}")
+            response[instruction] = node_instruction.execute(instructions, instruction)
+        except HTTPException as e:
+            response[instruction] = {"error": e.detail}
+        except Exception as e:
+            response[instruction] = {"error": str(e)}
 
     return response

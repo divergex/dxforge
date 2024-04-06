@@ -19,6 +19,5 @@ requests~=2.31.0
 pyaml~=20.4.0
 kubernetes~=29.0.0
 pandas~=1.5.3
-numpy~=1.23.5
 plotly~=5.19.0
 python-dotenv~=0.21.0

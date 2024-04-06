@@ -1,0 +1,9 @@
+name: quant
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.10
+  - anaconda
+  - pip
+  - pip:
+    - -r requirements.txt

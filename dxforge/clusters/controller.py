@@ -44,12 +44,12 @@ class Controller:
     def nodes(self) -> dict[str, Node]:
         return self._nodes
 
-    def build_node(self, node: Node) -> dict:
+    def build_node(self, node: Node, *args, **kwargs) -> dict:
         for depend_node_tag in node.config.build.depends_on:
             depend_node_name = depend_node_tag.split(":")[0]
             depend_node = self.nodes[depend_node_name]
             self.build_node(depend_node)
-        response, _ = node.build(self.docker_client)
+        response, _ = node.build(self.docker_client, *args, **kwargs)
         return response
 
     def start_node(self, node: Node) -> dict:

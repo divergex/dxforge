@@ -22,6 +22,10 @@ class Node:
         return cls(NodeConfig.from_config(config, path, info))
 
     @property
+    def alive(self):
+        return len(self.instances) > 0 and any(instance.alive for instance in self.instances.values())
+
+    @property
     def client(self):
         return httpx.AsyncClient()
 
@@ -65,12 +69,12 @@ class Node:
                 }
         return status
 
-    def build(self, docker_client: DockerClient) -> Tuple[dict, Union[Image, None]]:
+    def build(self, docker_client: DockerClient, *args, **kwargs) -> Tuple[dict, Union[Image, None]]:
         try:
             image = docker_client.images.build(
                 path=self._config.path,
                 tag=self._config.build.tag,
-                nocache=True,
+                *args, **kwargs
             )
 
             return {
