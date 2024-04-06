@@ -34,13 +34,15 @@ class Instance:
         return None
 
     def create(self, docker_client: DockerClient) -> Container:
+        container_config = {
+            'image': self.data.build.tag,
+            'ports': self.data.run.ports,
+            'network': self.data.run.network if self.data.run.network != "host" else None,
+            'extra_hosts': {'host.docker.internal': 'host-gateway'},
+            'detach': True,
+        }
         self._container = docker_client.containers.create(
-            image=self.data.build.tag,
-            ports=self.data.run.ports,
-            network=self.data.run.network if self.data.run.network != "host" else None,
-            detach=True,
-            host_config=docker_client.create_host_config(extra_hosts={'host.docker.internal': 'host-gateway'})
-
+            **container_config
         )
         return self._container
 

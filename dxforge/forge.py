@@ -21,8 +21,7 @@ class Forge(metaclass=SingletonMeta):
             'name': network_name
         }
 
-        docker_client = docker.DockerClient() if docker else None
-        # network = docker_client.networks.create(**network_params)
+        docker_client = docker.DockerClient(base_url='unix://var/run/docker.sock') if docker else None
 
         try:
             docker_client.networks.create(**network_params)

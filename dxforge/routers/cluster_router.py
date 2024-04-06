@@ -66,10 +66,15 @@ class NodeInstruction:
 
         self.instructions = {
             "create": self.node.create_instance,
-            "build": self.controller.build_node,
-            "start": self.controller.start_node,
-            "stop": self.controller.stop_node,
+            "build": self.run(self.controller.build_node),
+            "start": self.run(self.controller.start_node),
+            "stop": self.run(self.controller.stop_node),
         }
+
+    def run(self, func):
+        def wrapper(**kwargs):
+            return func(self.node, **kwargs)
+        return wrapper
 
     @staticmethod
     def get_kwargs(instructions, instruction):
