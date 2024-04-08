@@ -49,7 +49,7 @@ class Node:
 
     def create_instance(self, uuid: str = None):
         if uuid is None:
-            uuid = uuid4()
+            uuid = str(uuid4())
         self.instances[uuid] = Instance(self._config)
 
         return uuid
@@ -89,7 +89,7 @@ class Node:
     def start(self, docker_client: DockerClient) -> dict:
         return self._run(Instance.start, docker_client)
 
-    def stop(self) -> dict:
+    def stop(self, uuid=None) -> dict:
         return self._run(Instance.stop)
 
     def log(self, uuid):

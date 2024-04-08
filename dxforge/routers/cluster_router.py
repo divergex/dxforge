@@ -59,6 +59,18 @@ async def get_node_status(controller: str,
     return node.status
 
 
+@router.get("/{controller}/node/{node}/logs/{uuid}")
+async def get_node_logs(controller: str,
+                        node: str,
+                        uuid: str):
+    controller = get_controller(controller)
+    node = get_node(controller, node)
+
+    if uuid not in node.instances:
+        raise HTTPException(status_code=404, detail="instance not found")
+    return node.instances[uuid].logs()
+
+
 class NodeInstruction:
     def __init__(self, controller: Controller, node: Node):
         self.controller = controller
@@ -74,6 +86,7 @@ class NodeInstruction:
     def run(self, func):
         def wrapper(**kwargs):
             return func(self.node, **kwargs)
+
         return wrapper
 
     @staticmethod

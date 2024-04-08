@@ -52,6 +52,7 @@ class NodeConfig(Config):
     run: RunConfig
     path: str = None
     info: dict = None
+    name: str = None
 
     @classmethod
     def from_config(cls,

@@ -2,11 +2,20 @@ import asyncio
 from typing import AsyncGenerator
 
 import requests
+import websockets
 import yaml
 
 import dxlib as dx
 from dxlib.interfaces.internal import MarketInterface
 from dxlib.strategies.custom_strategies import RsiStrategy
+
+
+async def log(url, logger):
+    logger.info(url)
+    async with websockets.connect(url) as ws:
+        while True:
+            message = await ws.recv()
+            logger.info(message)
 
 
 def main():
@@ -22,7 +31,7 @@ def main():
     m_info = requests.get(f"http://{host}:8000/cluster/feeds/node/yahoo-finance").json()
     m_status = requests.get(f"http://{host}:8000/cluster/feeds/status/yahoo-finance").json()
 
-    m_port = m_info["interfaces"][required]["http"]["port"]
+    m_port = m_info["interfaces"][required]["ws"]["port"]
     m_host = list(m_status["instances"].values())[0]
 
     strategy = RsiStrategy(field="price")
