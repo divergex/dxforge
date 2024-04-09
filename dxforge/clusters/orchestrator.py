@@ -30,7 +30,7 @@ class Orchestrator:
     @property
     async def info(self):
         return {
-            "controllers": {controller: await self.controllers[controller].info for controller in self.controllers},
+            "controllers": {controller: self.controllers[controller].info for controller in self.controllers},
         }
 
     @staticmethod

@@ -1,0 +1,11 @@
+run:
+  ports:
+    - "4001/tcp:4001"
+  network: "dxforge"
+
+build:
+  depends_on:
+    - "feed:latest"
+  dockerfile: Dockerfile
+  context: .
+  tag: rb-feed:latest

@@ -28,7 +28,6 @@ def main():
 
         while http_server.alive and websocket_server.alive:
             time.sleep(1)
-        print("e")
     except KeyboardInterrupt:
         pass
     finally:
