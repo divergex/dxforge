@@ -1,6 +1,6 @@
 # dxforge
 
-_An API-based orchestration platform by DivergeX_
+_An API-based orchestration platform for the quantitative trading ecossystem._
 
 The dxforge suite is aimed at small teams and large teams that plan on scaling, reducing costs and maintenance of
 quantitative trading strategies.
