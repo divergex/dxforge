@@ -1,0 +1,14 @@
+controller:
+  name: "strategies"
+  path: "controllers/strategies/"
+  nodes:
+    strategy:
+      config: "config.yaml"
+      path: "strategy/"
+    rsi-strategy:
+      config: "config.yaml"
+      path: "rsi-strategy/"
+
+networks:
+  dxforge:
+    external: true

@@ -1,5 +1,5 @@
 # Use the base image as the starting point
-FROM strategy:latest
+FROM feed:latest
 
 # Copy strategy-specific code and files
 COPY . .

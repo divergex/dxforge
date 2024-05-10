@@ -28,7 +28,7 @@ class Orchestrator:
         return status
 
     @property
-    def info(self):
+    async def info(self):
         return {
             "controllers": {controller: self.controllers[controller].info for controller in self.controllers},
         }

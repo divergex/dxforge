@@ -2,50 +2,55 @@ from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.images import Image
 
-from .node_data import NodeData
+from .node_config import NodeConfig
 
 
 class Instance:
     def __init__(self,
-                 data: NodeData = None,
+                 data: NodeConfig = None,
                  ):
         self.data = data
         self._container: Container | None = None
         self._image: Image | None = None
 
     @property
+    def status(self):
+        return self._container.status
+
+    @property
     def alive(self):
-        if not self._container:
-            return False
         return self._container.status == "running"
 
     @property
     def ip(self):
         if self._container:
-            if self.data.network == "host":
+            if self.data.run.network == "host":
                 return "localhost"
-            elif self.data.network == "bridge":
+            elif self.data.run.network == "bridge":
                 return self._container.attrs["NetworkSettings"]["IPAddress"]
             else:
-                return self._container.attrs["NetworkSettings"]["Networks"][self.data.network]["IPAddress"]
+                return self._container.attrs["NetworkSettings"]["Networks"][self.data.run.network]["IPAddress"]
 
         return None
 
-    def build(self, docker_client: DockerClient) -> Image:
-        return docker_client.images.build(
-            path=self.data.path,
-            tag=self.data.image_tag
+    def create(self, docker_client: DockerClient) -> Container:
+        container_config = {
+            'image': self.data.build.tag,
+            'ports': self.data.run.ports,
+            'network': self.data.run.network if self.data.run.network != "host" else None,
+            'extra_hosts': {'host.docker.internal': 'host-gateway'},
+            'detach': True,
+        }
+        self._container = docker_client.containers.create(
+            **container_config
         )
+        return self._container
 
-    def start(self, docker_client: DockerClient) -> Container:
-        container = docker_client.containers.run(
-            image=self.data.image_tag,
-            expose=self.data.ports,
-            network=self.data.network,
-            detach=True,
-        )
-        self._container = container
-        return container
+    def start(self, docker_client: DockerClient):
+        if not self._container:
+            self.create(docker_client)
+        self._container.start()
+        self._container.reload()
 
     def stop(self):
         if self._container:
@@ -62,6 +67,6 @@ class Instance:
     def info(self):
         return {
             "ip": self.ip,
-            "ports": self.data.ports,
-            "network": self.data.network,
+            "ports": self.data.run.ports,
+            "network": self.data.run.network,
         }

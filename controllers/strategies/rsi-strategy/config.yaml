@@ -1,12 +1,12 @@
 run:
   ports:
-    - "8001/tcp:8001"
+    - "8002/tcp:8002"
     - "4001/tcp"
   network: "dxforge"
 
 build:
+  tag: rsi-strategy:latest
   depends_on:
-    - "feed:latest"
+    - "strategy:latest"
   dockerfile: Dockerfile
   context: .
-  tag: yahoo-finance:latest

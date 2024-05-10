@@ -1,0 +1,7 @@
+{
+  interfaces: {
+    "MarketInterface": {
+      "ws": { "port": 4001 }
+    }
+  },
+}

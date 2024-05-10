@@ -1,27 +1,50 @@
 import asyncio
-import os
 from typing import AsyncGenerator
+
+import requests
+import websockets
+import yaml
 
 import dxlib as dx
 from dxlib.interfaces.internal import MarketInterface
 from dxlib.strategies.custom_strategies import RsiStrategy
 
 
+async def log(url, logger):
+    logger.info(url)
+    async with websockets.connect(url) as ws:
+        while True:
+            message = await ws.recv()
+            logger.info(message)
+
+
 def main():
-    interface_port = int(os.environ.get("INTERFACE_PORT", 4001))
-    http_port = int(os.environ.get("HTTP_PORT"))
+    info = yaml.safe_load(open("info.yaml", "r"))
+    interfaces = info["interfaces"]
+    http_port = int(interfaces["StrategyInterface"]["http"]["port"])
+
+    external = info["external"]
+    required = external["feeds"]["yahoo-finance"]
+
+    host = info.get("host", "host.docker.internal")
+
+    m_info = requests.get(f"http://{host}:8000/cluster/feeds/node/yahoo-finance").json()
+    m_status = requests.get(f"http://{host}:8000/cluster/feeds/status/yahoo-finance").json()
+
+    m_port = m_info["interfaces"][required]["ws"]["port"]
+    m_host = list(m_status["instances"].values())[0]
 
     strategy = RsiStrategy(field="price")
-    market_interface = MarketInterface(host=f"0.0.0.0")
+    market_interface = MarketInterface(host=m_host)
 
     logger = dx.InfoLogger()
     executor = dx.Executor(strategy)
-    executor_interface = dx.ExecutorInterface(executor)
-    http_server = dx.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
+    executor_interface = dx.internal.ExecutorInterface(executor)
+    http_server = dx.servers.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
     http_server.add_interface(executor_interface)
     try:
         http_server.start()
-        quotes = market_interface.listen(market_interface.quote_stream, port=interface_port, retry=1)
+        quotes = market_interface.listen(market_interface.quote_stream, port=m_port, retry=1)
 
         def get_first_element_sync(async_gen):
             async def fetch_first_element():

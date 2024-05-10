@@ -1,6 +1,6 @@
 # dxforge
 
-_An API-based orchestration platform by DivergeX_
+_An API-based orchestration platform for the quantitative trading ecossystem._
 
 The dxforge suite is aimed at small teams and large teams that plan on scaling, reducing costs and maintenance of
 quantitative trading strategies.
@@ -14,11 +14,13 @@ With a K8s + Docker based approach, the framework is designed to be scalable, fa
 
 ### Installation
 
-If you prefer not to go through the installation process or simply want to run the `strategy_manager` without having
+If you prefer not to go through the installation process or simply want to run the `dxforge` without having
 Python and the dependencies set up, you can use the precompiled executables. This is especially useful for deployment or
 sharing with users who might not be familiar with Python environments.
 
 ```bash
+sudo ufw allow 8000  # This is needed to allow the docker containers with non-default networks to communicate with the host
+# You can specify the port in the config.yaml file, and allow that port instead
 sudo groupadd docker
 sudo usermod -aG docker $USER
 gnome-session-quit
@@ -30,8 +32,8 @@ docker ps
 
 1. Navigate to the [Releases section](https://github.com/divergex/strategy-manager/releases).
 2. Download the appropriate file for your operating system:
-    - `strategy_manager.sh` for Linux/macOS
-    - `strategy_manager.exe` for Windows
+    - `dxforge.sh` for Linux/macOS
+    - `dxforge.exe` for Windows
 3. After downloading, follow the instructions below.
 
 ### For Linux/macOS Users
@@ -51,14 +53,14 @@ To run the dxforge using the shell script:
 2. Access the directory containing the sample strategy and feed managers
 
     ```bash
-    cd strategy-manager
+    cd dxforge
     ```
 
 3. Run the script:
 
     ```bash
-    ./dist/strategy-manager [config_file] [--host] [--port]
-    # e.g. ./dist/strategy-manager config.yaml
+    ./dist/dxforge [config_file] [--host] [--port]
+    # e.g. ./dist/dxforge config.yaml
     ```
 
 Replace `[arguments]` with any command-line arguments you wish to pass to the dxforge.

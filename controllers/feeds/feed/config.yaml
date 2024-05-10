@@ -1,0 +1,4 @@
+build:
+  path: Dockerfile
+  context: .
+  tag: feed:latest

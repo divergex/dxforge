@@ -1,7 +1,6 @@
 run:
   ports:
-    - "8001/tcp:8001"
-    - "4001/tcp"
+    - "4001/tcp:4001"
   network: "dxforge"
 
 build:
@@ -9,4 +8,4 @@ build:
     - "feed:latest"
   dockerfile: Dockerfile
   context: .
-  tag: yahoo-finance:latest
+  tag: rb-feed:latest
