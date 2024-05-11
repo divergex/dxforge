@@ -53,7 +53,7 @@ def execute(controller: Controller, node: Node, instructions: Dict[Instruction, 
 
 @router.get("/")  # status
 async def get_status():
-    return forge.orchestrator.status()
+    return forge.orchestrator.status
 
 
 @router.get("/info")
@@ -113,3 +113,13 @@ async def post_node_instruction(request: Request,
     response = execute(controller, node, instructions)
 
     return response
+
+
+# logs
+@router.get("/{controller}/node/{node}/logs")
+async def get_node_log(controller: str,
+                       node: str):
+    controller = get_controller(controller)
+    node = get_node(controller, node)
+
+    return node.log()

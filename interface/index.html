@@ -10,6 +10,7 @@
 <body>
 
 <div id="cluster" class="container mt-5"></div>
+<div id="logs"></div>
 
 <!-- Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -22,29 +23,31 @@
         .then(response => response.json())
         .then(data => {
             const clusterDiv = document.getElementById('cluster');
+            let controllers = data['controllers'];
             clusterDiv.innerHTML = `
         <div class="accordion" id="accordionCluster">
-          ${Object.keys(data).map((key, index) => `
+            <h2>Controllers:</h2>
+          ${Object.keys(controllers).map((key, index) => `
             <div class="card">
               <div class="card-header" id="heading${key}">
                 <h2 class="mb-0">
                   <button class="btn btn-link ${index === 0 ? '' : 'collapsed'}" type="button" data-toggle="collapse" data-target="#collapse${key}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${key}">
-                    Controller: ${key[0].toUpperCase() + key.slice(1)}
+                   ${key[0].toUpperCase() + key.slice(1)}
                   </button>
                 </h2>
               </div>
               <div id="collapse${key}" class="collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading${key}" data-parent="#accordionCluster">
                 <div class="card-body">
-                  <h5>Stopped:</h5>
+                  <h5>Nodes:</h5>
                   <ul>
-                    ${data[key].stopped.map(item => `
-                      <li>${item} <button class="btn btn-sm btn-primary" onclick="expandNode('${key}', '${item}')">Expand</button></li>
-                    `).join('')}
-                  </ul>
-                  <h5>Running:</h5>
-                  <ul>
-                    ${data[key].running.map(item => `
-                      <li>${item} <button class="btn btn-sm btn-primary" onclick="expandNode('${key}', '${item}')">Expand</button></li>
+                    ${Object.keys(controllers[key].nodes).map(node => `
+                      <li>
+                        <a href="#" onclick="expandNode('${key}', '${node}')">${node}</a>
+                        <button class="btn btn-primary btn-sm" onclick="createInstance('${key}', '${node}')">Create Instance</button>
+                        <button class="btn btn-primary btn-sm" onclick="startInstance('${key}', '${node}')">Start Instances</button>
+                        <button class="btn btn-primary btn-sm" onclick="stopInstances('${key}', '${node}')">Stop Instances</button>
+                        <button class="btn btn-primary btn-sm" onclick="getLogs('${key}', '${node}')">Logs</button>
+                      </li>
                     `).join('')}
                   </ul>
                 </div>
@@ -58,12 +61,82 @@
             console.error('Error fetching data:', error);
         });
 
-    function expandNode(controller, node) {
-        fetch(`http://localhost:8000/cluster/${controller}/node/${node}`)
+    function createInstance(controller, node) {
+        // log url
+        fetch(`http://localhost:8000/cluster/${controller}/node/${node}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'instructions': {"build": {}, "create": {}}
+            })
+        })
             .then(response => response.json())
             .then(data => {
                 console.log(data);
-                // Handle the response here, e.g., display the instances in a modal
+                // Handle the response here, e.g., display the instance in a modal
+            })
+            .catch(error => {
+                console.error('Error creating instance:', error);
+            });
+    }
+
+    function startInstance(controller, node) {
+        fetch(`http://localhost:8000/cluster/${controller}/node/${node}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'instructions': {"start": {}}
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                // Handle the response here, e.g., display the instance in a modal
+            })
+            .catch(error => {
+                console.error('Error starting instance:', error);
+            });
+    }
+
+    function stopInstances(controller, node) {
+        fetch(`http://localhost:8000/cluster/${controller}/node/${node}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'instructions': {"stop": {}}
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                // Handle the response here, e.g., display the instance in a modal
+            })
+            .catch(error => {
+                console.error('Error stopping instances:', error);
+            });
+    }
+
+    function getLogs(controller, node) {
+        fetch(`http://localhost:8000/cluster/${controller}/node/${node}/logs`)
+            .then(response => response.json())
+            .then(data => {
+                const logsDiv = document.getElementById('logs');
+                logsDiv.innerHTML = `
+                <div>
+                <h2>Logs: ${controller} - ${node}</h2>
+                ${Object.keys(data).map(key => `
+                    <h3>Instance: ${key}</h3>
+                    <pre>${data[key]}</pre>
+                `).join('')}
+</div>
+        `;
+
             })
             .catch(error => {
                 console.error('Error fetching node instances:', error);

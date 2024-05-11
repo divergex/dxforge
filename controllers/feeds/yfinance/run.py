@@ -2,6 +2,7 @@ import time
 import yaml
 
 import dxlib as dx
+from dxlib.interfaces.external.yfinance import YFinanceAPI
 
 
 def main():
@@ -10,7 +11,7 @@ def main():
     websocket_port = int(interfaces["MarketInterface"]["ws"]["port"])
 
     logger = dx.InfoLogger()
-    interface = dx.internal.MarketInterface(dx.external.yfinance.YFinanceAPI())
+    interface = dx.internal.MarketInterface(YFinanceAPI())
     http_server = dx.servers.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
     websocket_server = dx.servers.WebsocketServer(host="0.0.0.0", port=websocket_port, logger=logger)
 

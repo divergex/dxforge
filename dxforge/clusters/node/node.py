@@ -43,7 +43,6 @@ class Node:
 
     @property
     def status(self):
-        a = 1
         return {
             "instances": {uuid: instance.status for uuid, instance in self.instances.items()},
         }
@@ -92,8 +91,10 @@ class Node:
     def start(self, docker_client: DockerClient) -> dict:
         return self._run(Instance.start, docker_client)
 
-    def stop(self, uuid=None) -> dict:
+    def stop(self) -> dict:
         return self._run(Instance.stop)
 
-    def log(self, uuid):
+    def log(self, uuid=None):
+        if uuid is None:
+            return {uuid: instance.logs() for uuid, instance in self.instances.items()}
         return self.instances[uuid].logs()

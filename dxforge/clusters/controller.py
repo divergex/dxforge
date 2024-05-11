@@ -62,6 +62,7 @@ class Controller:
     def stop_node(node: Node) -> dict:
         return node.stop()
 
+    @property
     def status(self):
         status = {
             "nodes": {

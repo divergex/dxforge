@@ -11,21 +11,11 @@ class Orchestrator:
         self.controllers = controllers
         self.docker_client = docker_client
 
+    @property
     def status(self):
-        status = {
-            controller_name: {
-                "stopped": [],
-                "running": []
-            }
-            for controller_name in self.controllers
+        return {
+            "controllers": {controller: self.controllers[controller].status for controller in self.controllers},
         }
-        for controller in self.controllers:
-            for node in self.controllers[controller].nodes:
-                if self.controllers[controller].nodes[node].alive:
-                    status[controller]["running"].append(node)
-                else:
-                    status[controller]["stopped"].append(node)
-        return status
 
     @property
     def info(self):
