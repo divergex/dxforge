@@ -127,7 +127,7 @@ proceeding.
 To start the dxforge instance locally, run:
 
 ```bash
-python dxforge/main.py config.yaml
+python dxforge config.yaml
 ```
 
 Optional command-line arguments:

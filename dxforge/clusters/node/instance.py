@@ -15,7 +15,7 @@ class Instance:
 
     @property
     def status(self):
-        return self._container.status
+        return self._container.status if self._container else "not created"
 
     @property
     def alive(self):
@@ -33,7 +33,7 @@ class Instance:
 
         return None
 
-    def create(self, docker_client: DockerClient) -> Container:
+    def create_container(self, docker_client: DockerClient) -> Container:
         container_config = {
             'image': self.data.build.tag,
             'ports': self.data.run.ports,
@@ -48,7 +48,7 @@ class Instance:
 
     def start(self, docker_client: DockerClient):
         if not self._container:
-            self.create(docker_client)
+            self.create_container(docker_client)
         self._container.start()
         self._container.reload()
 

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import yaml
 import uvicorn
 
-from dxforge import App, Forge
+from . import App, Forge
 
 
 def main() -> App:

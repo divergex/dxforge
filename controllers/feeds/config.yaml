@@ -5,11 +5,11 @@ controller:
         feed:
             config: "config.yaml"
             path: "feed/"
-        yahoo-finance:
+        yfinance:
             config: "config.yaml"
             info: "info.yaml"
-            path: "yahoo-finance/"
-        rb-feed:
+            path: "yfinance/"
+        robobanker:
             config: "config.yaml"
             path: "rb-feed/"
 networks:

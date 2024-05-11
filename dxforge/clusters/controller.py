@@ -52,6 +52,9 @@ class Controller:
         response, _ = node.build(self.docker_client, *args, **kwargs)
         return response
 
+    def create_instance(self, node: Node, *args, **kwargs) -> dict:
+        return node.create_instance(self.docker_client, *args, **kwargs)
+
     def start_node(self, node: Node) -> dict:
         return node.start(self.docker_client)
 

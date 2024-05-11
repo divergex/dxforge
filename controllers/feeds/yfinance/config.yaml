@@ -9,4 +9,4 @@ build:
     - "feed:latest"
   dockerfile: Dockerfile
   context: .
-  tag: yahoo-finance:latest
+  tag: yfinance:latest

@@ -24,12 +24,12 @@ def main():
     http_port = int(interfaces["StrategyInterface"]["http"]["port"])
 
     external = info["external"]
-    required = external["feeds"]["yahoo-finance"]
+    required = external["feeds"]["yfinance"]
 
     host = info.get("host", "host.docker.internal")
 
-    m_info = requests.get(f"http://{host}:8000/cluster/feeds/node/yahoo-finance").json()
-    m_status = requests.get(f"http://{host}:8000/cluster/feeds/status/yahoo-finance").json()
+    m_info = requests.get(f"http://{host}:8000/cluster/feeds/node/yfinance").json()
+    m_status = requests.get(f"http://{host}:8000/cluster/feeds/status/yfinance").json()
 
     m_port = m_info["interfaces"][required]["ws"]["port"]
     m_host = list(m_status["instances"].values())[0]

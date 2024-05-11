@@ -43,14 +43,17 @@ class Node:
 
     @property
     def status(self):
+        a = 1
         return {
-            "instances": {uuid: instance.ip for uuid, instance in self.instances.items()},
+            "instances": {uuid: instance.status for uuid, instance in self.instances.items()},
         }
 
-    def create_instance(self, uuid: str = None):
+    def create_instance(self, docker_client: DockerClient, uuid: str = None):
         if uuid is None:
             uuid = str(uuid4())
-        self.instances[uuid] = Instance(self._config)
+        instance = Instance(self._config)
+        instance.create_container(docker_client)
+        self.instances[uuid] = instance
 
         return uuid
 

@@ -7,7 +7,7 @@
   },
   external: {
     "feeds": {
-      "yahoo-finance": "MarketInterface"
+      "yfinance": "MarketInterface"
     }
   },
   name: "rsi-strategy",

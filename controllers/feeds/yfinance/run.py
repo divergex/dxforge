@@ -37,4 +37,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print("yahoo-finance/run.py executed successfully.")
+    print("yfinance/run.py executed successfully.")
