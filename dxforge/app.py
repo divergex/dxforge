@@ -12,13 +12,9 @@ class App(FastAPI):
         self.forge = forge
 
         if origins is None:
-            origins = [
-                "http://localhost:80",
-                "http://localhost:443",
-                "http://localhost:3000",
-                "http://localhost:8000",
-                "http://localhost:8080",
-            ]
+            # any localhost port
+            allow_origin_regex = r"http://localhost:\d+"
+            origins = "*"
 
         # noinspection PyTypeChecker
         self.add_middleware(
@@ -26,6 +22,7 @@ class App(FastAPI):
             allow_origins=origins,
             allow_credentials=True,
             allow_methods=["*"],
+            allow_headers=["*"],
         )
 
         self.include_router(cluster_router.router, prefix="/cluster", tags=["cluster"])
