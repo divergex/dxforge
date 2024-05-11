@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster Status</title>
+</head>
+<body>
+    <h1>Cluster Status</h1>
+
+    <h2>Feeds</h2>
+    <ul id="feeds-status">
+    </ul>
+
+    <h2>Strategies</h2>
+    <ul id="strategies-status">
+    </ul>
+
+    <script>
+        async function fetchClusterStatus() {
+            const response = await fetch('http://localhost:8000/cluster/');
+            const data = await response.json();
+            updateClusterStatus(data.feeds, 'feeds-status');
+            updateClusterStatus(data.strategies, 'strategies-status');
+        }
+
+        async function fetchNodeStatus(controller, node) {
+            const response = await fetch(`http://localhost:8000/cluster/${controller}/node/${node}`);
+            const data = await response.json();
+            console.log(data);
+        }
+
+        async function performAction(controller, node, action) {
+            const requestBody = {
+                instructions: {
+                    [action]: {}
+                }
+            };
+
+            const response = await fetch(`http://localhost:8000/cluster/${controller}/node/${node}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+        }
+
+        function updateClusterStatus(cluster, listId) {
+            const listElement = document.getElementById(listId);
+            listElement.innerHTML = '';
+
+            for (const statusType in cluster) {
+                const statusNodes = cluster[statusType];
+                statusNodes.forEach(node => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${node}: ${statusType}`;
+                    const setupButton = createActionButton('Setup', 'setup', node);
+                    const startButton = createActionButton('Start', 'start', node);
+                    const stopButton = createActionButton('Stop', 'stop', node);
+                    listItem.appendChild(setupButton);
+                    listItem.appendChild(startButton);
+                    listItem.appendChild(stopButton);
+                    listElement.appendChild(listItem);
+                });
+            }
+        }
+
+        function createActionButton(label, action, node) {
+            const button = document.createElement('button');
+            button.textContent = label;
+            button.onclick = () => performAction('controller', node, action); // Replace 'controller' with the actual controller name
+            return button;
+        }
+
+        window.onload = function() {
+            fetchClusterStatus();
+        };
+    </script>
+</body>
+</html>
