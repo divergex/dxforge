@@ -1,6 +1,0 @@
-{
-  "controllers": {
-    "feeds": "controllers/feeds/config.yaml",
-    "strategies": "controllers/strategies/config.yaml",
-  }
-}

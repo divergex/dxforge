@@ -1,14 +1,21 @@
-# dxforge
+<img src="resources/forge.png" alt="drawing" width="250"/>
 
-_An API-based orchestration platform for the quantitative trading ecossystem._
+# dxforge - A Quantitative Trading Orchestration Platform
 
-The dxforge suite is aimed at small teams and large teams that plan on scaling, reducing costs and maintenance of
+[![Publish Package](https://github.com/divergex/dxlib/actions/workflows/publish-package.yml/badge.svg?branch=main&event=release)](https://github.com/delphos-quant/dxlib/actions/workflows/publish-package.yml)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/dxlib)
+![GitHub Tag](https://img.shields.io/github/v/tag/divergex/dxforge)
+![GitHub License](https://img.shields.io/github/license/divergex/dxlib)
+
+> _API-based container and service orchestration for the quantitative trading ecossystem._
+
+The _dxforge_ suite is aimed at small teams and large teams that plan on scaling, reducing costs and maintenance of
 quantitative trading strategies.
 
 The framework focuses on managing different strategies, their instances, feeds and portfolios
 via distributed and scalable nodes, without the need of managing them individually.
 
-With a K8s + Docker based approach, the framework is designed to be scalable, fault-tolerant and stress-tested.
+With a virtual container based approach, the framework is designed to be scalable, fault-tolerant and stress-tested.
 
 ## Getting Started
 
@@ -19,8 +26,7 @@ Python and the dependencies set up, you can use the precompiled executables. Thi
 sharing with users who might not be familiar with Python environments.
 
 ```bash
-sudo ufw allow 8000  # This is needed to allow the docker containers with non-default networks to communicate with the host
-# You can specify the port in the config.yaml file, and allow that port instead
+# sudo ufw allow 8000
 sudo groupadd docker
 sudo usermod -aG docker $USER
 gnome-session-quit
