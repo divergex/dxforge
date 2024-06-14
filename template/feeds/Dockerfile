@@ -1,7 +1,7 @@
 FROM dxlib:latest
 LABEL authors="rzimmerdev"
 
-WORKDIR /strategy
+WORKDIR /feeds
 
 COPY main.py .
 

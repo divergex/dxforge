@@ -1,0 +1,6 @@
+name: strategy-cool.123-4:22
+description: "This is a cool strategy"
+tag: "strategy-cool"
+env:
+  HOST: "0.0.0.0"
+  PORT: "8080"

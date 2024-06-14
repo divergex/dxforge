@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 from typing import Dict
 
+from docker import DockerClient
 
-from .node import Node
+from .node import Node, NodeConfig
+
 
 
 @dataclass
 class NodeGroup:
     def __init__(self, nodes: Dict[str, Node]):
         self.nodes = nodes
+        self.proxy = None
 
     def __getitem__(self, item) -> Node:
         return self.nodes[item]

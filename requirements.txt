@@ -1,6 +1,6 @@
 typing_extensions~=4.8.0
 uvicorn~=0.23.0
-websocket-client~=1.6.2
+websocket-client~=1.8.0
 docker~=7.0.0
 fastapi~=0.109.2
 requests~=2.31.0

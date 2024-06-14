@@ -1,2 +1,2 @@
-from .node import Node
+from .node import Node, NodeConfig
 from .group import NodeGroup

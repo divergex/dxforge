@@ -1,13 +1,31 @@
 from dataclasses import dataclass
 from typing import Dict
 
+import yaml
 from docker import DockerClient
 from docker.models.containers import Container
 
 
 @dataclass
 class NodeConfig:
-    tag: str
+    def __init__(self,
+                 tag: str,
+                 name: str = None,
+                 env: Dict = None,
+                 network: str = "bridge",
+                 *args, **kwargs):
+        self.tag = tag
+        self.name = name
+        self.env = env
+        self.network = network
+
+        if not isinstance(self.env, dict):
+            raise TypeError("Environment must be a dictionary")
+
+    @classmethod
+    def safe_load(cls, path: str):
+        with open(path) as f:
+            return cls(**yaml.safe_load(f))
 
 
 class Node:
@@ -26,15 +44,17 @@ class Node:
         if container := self._get(container_id):
             return container.logs(**kwargs)
 
-    def build(self):
+    def build(self, path: str = None):
         self.docker_client.images.build(
-            path='..',
+            path=path,
             tag=self.config.tag
         )
 
     def create(self, **kwargs) -> str:
         container = self.docker_client.containers.create(
             self.config.tag,
+            environment=self.config.env,
+            network=self.config.network,
             **kwargs
         )
         self.containers[container.id] = container
@@ -60,3 +80,13 @@ class Node:
     def status(self, container_id: str = None):
         if container := self._get(container_id):
             return container.status
+
+    @classmethod
+    def from_config(cls, path: str, docker_client: DockerClient = None):
+        try:
+            config = NodeConfig.safe_load(path)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Config file not found at {path}")
+        except TypeError as e:
+            raise TypeError(f"Invalid config fields. {e}")
+        return cls(config, docker_client)
