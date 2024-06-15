@@ -26,15 +26,15 @@ Python and the dependencies set up, you can use the precompiled executables. Thi
 sharing with users who might not be familiar with Python environments.
 
 ```bash
-# sudo ufw allow 8000
-sudo groupadd docker
-sudo usermod -aG docker $USER
-gnome-session-quit
+pip install -r requirements.txt
+python dxforge start
 ```
 
-```bash
-docker ps
-```
+Produces:
+
+><span style="color:DarkCyan">Starting</span> <span style="color:GoldenRod">dxforge</span><span style="color:DarkCyan">...</span>
+<br>
+<span style="color:DarkGreen">Started with PID 231835</span>
 
 1. Navigate to the [Releases section](https://github.com/divergex/strategy-manager/releases).
 2. Download the appropriate file for your operating system:

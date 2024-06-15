@@ -51,20 +51,20 @@ def start(delete_log=True, docker_socket="unix:///var/run/docker.sock", detach=F
             )
             with open(PID_FILE, 'w') as pid_file:
                 pid_file.write(str(process.pid))
-        console.print(f"[green]Script started with PID {process.pid}[/green]")
+        console.print(f"[gold3]dxforge[/gold3] [green]started with PID {process.pid}[/green]")
     else:
         # run the script in the foreground
         python_path = subprocess.check_output(['which', 'python']).decode().strip()
         process = subprocess.Popen([python_path, "-m", "dxforge.app", "--docker-socket", docker_socket])
         with open(PID_FILE, 'w') as pid_file:
             pid_file.write(str(process.pid))
-        console.print(f"[green]Script started with PID {process.pid}[/green]")
+        console.print(f"[gold3]dxforge[/gold3] [green]started with PID {process.pid}[/green]")
 
         try:
             process.wait()
         except KeyboardInterrupt:
             process.terminate()
-            console.print("[yellow]Script stopped[/yellow]")
+            console.print("[yellow]Stopped...[/yellow]")
 
 
 def stop(delete_log=False):
@@ -74,7 +74,7 @@ def stop(delete_log=False):
             pid = int(pid_file.read().strip())
         os.killpg(os.getpgid(pid), signal.SIGTERM)
         os.remove(PID_FILE)
-        console.print(f"[red]Script with PID {pid} stopped[/red]")
+        console.print(f"[red][gold3]dxforge[/gold3] with PID {pid} stopped[/red]")
         if delete_log:
             try:
                 os.remove(LOG_FILE)
@@ -129,7 +129,7 @@ def status():
         except psutil.NoSuchProcess:
             console.print(f"[yellow]PID {pid} is not running, but PID file exists.[/yellow]")
     else:
-        console.print("[yellow]Script is not running[/yellow]")
+        console.print("[yellow]dxforge is not running[/yellow]")
 
 
 def restart():
@@ -162,11 +162,14 @@ def main():
     # add option to delete the log file (if start, delete previous, if stop, delete current)
     parser.add_argument('--delete-log', action='store_true', help='Delete the log file.', default=None)
     parser.add_argument('--docker-socket', help='Docker socket to use.')
+
+    # if user adds -d tag, set detach to True
     parser.add_argument('-d', '--detach', action='store_true', help='Run the script in the background.')
+
     args = parser.parse_args()
 
     if args.command == 'start':
-        start(args.delete_log, args.docker_socket)
+        start(args.delete_log, args.docker_socket, args.detach)
     elif args.command == 'stop':
         stop(args.delete_log)
     elif args.command == 'status':
