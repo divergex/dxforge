@@ -1,12 +1,19 @@
+from typing import Dict, List
+
+
 class Registry:
     def __init__(self):
-        self._registry = {}
+        self._registry: Dict[str, object] = {}
+        self._groups: Dict[str, List[str]] = {}
 
     def register(self, name, obj):
         self._registry[name] = obj
 
     def get(self, name):
         return self._registry[name]
+
+    def remove(self, name):
+        del self._registry[name]
 
     def __getitem__(self, name):
         return self.get(name)

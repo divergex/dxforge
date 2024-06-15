@@ -29,14 +29,6 @@ class Node:
     def image(self):
         return self.tag
 
-    def _get(self, service_id: str = None) -> Service:
-        return self.docker_client.services.get(service_id)
-
-    # gets
-    def log(self, service_id: str = None, **kwargs):
-        if service := self._get(service_id):
-            return service.logs(**kwargs)
-
     def build(self, path: str = None):
         self.docker_client.images.build(
             path=path,
@@ -63,14 +55,22 @@ class Node:
         self.instances[service.id] = service
         return service
 
-    def stop(self, service_id: str = None):
-        if service := self._get(service_id):
+    @property
+    def service(self) -> Service:
+        return self.docker_client.services.get(self.name)
+
+    # gets
+    def log(self, service_id: str = None, **kwargs):
+        if service := self.service:
+            return service.logs(**kwargs)
+
+    def stop(self):
+        if service := self.service:
             service.remove()
-            del self.instances[service_id]
 
     def status(self, service_id: str = None):
-        if service := self._get(service_id):
-            return service.attrs['Spec']['Mode']['Replicated']['Replicas']
+        if service := self.service:
+            return service.attrs['Spec']['Mode']['Replicated']['Replicas'][0]['CurrentTasks'][0]['Status']['State']['Running']
 
     @classmethod
     def from_file(cls, path: str, docker_client: DockerClient = None):
@@ -81,3 +81,21 @@ class Node:
             raise FileNotFoundError(f"Config file not found at {path}")
         except TypeError as e:
             raise TypeError(f"Invalid config fields. {e}")
+
+    @classmethod
+    def from_service(cls, service: Service):
+        env = {}
+
+        for e in service.attrs['Spec']['TaskTemplate']['ContainerSpec']['Env']:
+            k, v = e.split('=')
+            env[k] = v
+
+        network = service.attrs['Spec']['Networks'][0]['Target'] if service.attrs['Spec'].get('Networks') else "bridge"
+
+        return cls(
+            docker_client=service.client,
+            tag=service.attrs['Spec']['TaskTemplate']['ContainerSpec']['Image'],
+            name=service.name,
+            env=env,
+            network=network
+        )
