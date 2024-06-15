@@ -15,6 +15,10 @@ class Registry:
     def remove(self, name):
         del self._registry[name]
 
+    def clear(self):
+        for name in list(self._registry):
+            self.remove(name)
+
     def __getitem__(self, name):
         return self.get(name)
 

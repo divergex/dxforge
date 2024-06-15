@@ -11,6 +11,11 @@ class NodeRegistry(Registry):
         super().__init__()
         self._registry: Dict[str, Node] = {}
 
+    def remove(self, name: str):
+        node = self.get(name)
+        node.remove()
+        del self._registry[name]
+
 
 class Orchestrator:
     def __init__(self, docker_client: DockerClient):
@@ -30,3 +35,11 @@ class Orchestrator:
 
     def get(self, name: str) -> Node:
         return self.nodes.get(name)
+
+    def load(self):
+        for service in self.docker_client.services.list():
+            node = Node.from_service(service)
+            self.add(node)
+
+    def clean(self):
+        self.nodes.clear()

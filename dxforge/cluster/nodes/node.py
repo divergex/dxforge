@@ -25,6 +25,9 @@ class Node:
 
         self.instances: Dict[str, Service] = {}
 
+    def __repr__(self):
+        return f"<Node: {self.name}>"
+
     @property
     def image(self):
         return self.tag
@@ -64,7 +67,7 @@ class Node:
         if service := self.service:
             return service.logs(**kwargs)
 
-    def stop(self):
+    def remove(self):
         if service := self.service:
             service.remove()
 

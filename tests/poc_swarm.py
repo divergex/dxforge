@@ -16,11 +16,8 @@ def main():
         'HOST': '0.0.0.0',
     }
 
-    # print existing services
-    for service in forge.orchestrator.docker_client.services.list():
-        print(service)
-        node = Node.from_service(service)
-        forge.orchestrator.add(node)
+    forge.orchestrator.load()
+
     if 'feed' not in forge.orchestrator.nodes:
         node = forge.orchestrator.new("feed", "feeds", env)
         node.build(folder)
@@ -34,20 +31,13 @@ def main():
         for container in service.tasks():
             print(container)
 
-    else:
-        node = forge.orchestrator.nodes['feed']
-
-        # remove service
-        service = node.service
-        service.remove()
-
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         pass
 
-    forge.orchestrator.remove("feeds")
+    forge.orchestrator.clean()
 
 
 if __name__ == "__main__":
