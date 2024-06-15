@@ -12,7 +12,10 @@ PID_FILE = f'{PATH}/dxforge.pid'
 LOG_FILE = f'{PATH}/dxforge.log'
 
 
-def start(delete_log=True):
+def start(delete_log=True, docker_socket="unix:///var/run/docker.sock", detach=False):
+    if delete_log is None:
+        delete_log = True
+
     console = Console()
     if os.path.exists(PID_FILE):
         console.print(f"[yellow]PID file {PID_FILE} already exists. Checking if the Forge is running...[/yellow]")
@@ -35,16 +38,33 @@ def start(delete_log=True):
             pass
         console.print("[cyan]Log file deleted[/cyan]")
 
-    with open(LOG_FILE, 'a') as log_file:
-        process = subprocess.Popen(
-            ['nohup', 'python', "-m", "dxforge.app.main"],
-            stdout=log_file,
-            stderr=log_file,
-            preexec_fn=os.setpgrp
-        )
+    if detach:
+        with open(LOG_FILE, 'a') as log_file:
+            # use absolute path to python to avoid issues with virtual environments
+            python_path = subprocess.check_output(['which', 'python']).decode().strip()
+
+            process = subprocess.Popen(
+                [f"nohup", python_path, "-m", "dxforge.app", "--docker-socket", docker_socket],
+                stdout=log_file,
+                stderr=log_file,
+                preexec_fn=os.setpgrp
+            )
+            with open(PID_FILE, 'w') as pid_file:
+                pid_file.write(str(process.pid))
+        console.print(f"[green]Script started with PID {process.pid}[/green]")
+    else:
+        # run the script in the foreground
+        python_path = subprocess.check_output(['which', 'python']).decode().strip()
+        process = subprocess.Popen([python_path, "-m", "dxforge.app", "--docker-socket", docker_socket])
         with open(PID_FILE, 'w') as pid_file:
             pid_file.write(str(process.pid))
-    console.print(f"[green]Script started with PID {process.pid}[/green]")
+        console.print(f"[green]Script started with PID {process.pid}[/green]")
+
+        try:
+            process.wait()
+        except KeyboardInterrupt:
+            process.terminate()
+            console.print("[yellow]Script stopped[/yellow]")
 
 
 def stop(delete_log=False):
@@ -140,11 +160,13 @@ def main():
                         help='Start, stop, check status, show logs, or configure systemd for the script.')
 
     # add option to delete the log file (if start, delete previous, if stop, delete current)
-    parser.add_argument('--delete-log', action='store_true', help='Delete the log file.')
+    parser.add_argument('--delete-log', action='store_true', help='Delete the log file.', default=None)
+    parser.add_argument('--docker-socket', help='Docker socket to use.')
+    parser.add_argument('-d', '--detach', action='store_true', help='Run the script in the background.')
     args = parser.parse_args()
 
     if args.command == 'start':
-        start(args.delete_log)
+        start(args.delete_log, args.docker_socket)
     elif args.command == 'stop':
         stop(args.delete_log)
     elif args.command == 'status':
