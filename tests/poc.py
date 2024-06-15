@@ -1,12 +1,14 @@
 import os
 import time
+import requests
 
 from docker import DockerClient
+from docker.types import EndpointSpec, ServiceMode
 from dxforge.cluster import Node
 
 
 def main():
-    docker_client = DockerClient()
+    docker_client = DockerClient(base_url='unix://home/rzimmerdev/.docker/desktop/docker.sock')
     node = Node.from_config('../template/strategies/strategy.yaml', docker_client)
 
     node.build('../template/strategies')
@@ -26,7 +28,6 @@ def main():
             out = node.log(node_id).decode()
             clear()
             print(out)
-            # clear stdout
             time.sleep(1)
 
     except KeyboardInterrupt:

@@ -171,7 +171,7 @@ python strategies/rsi-strategy/run.py
 And in another terminal, run the dxforge:
 
 ```bash
- python app.py config.yaml
+ python main.py config.yaml
 # or
 # ./dist/dxforge config.yaml
 ```

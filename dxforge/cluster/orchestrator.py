@@ -1,20 +1,24 @@
 from typing import Dict
 
 from docker import DockerClient
-
-from .nodes import NodeGroup
+from .nodes import Node
 
 
 class Orchestrator:
     def __init__(self, docker_client: DockerClient):
         self.docker_client = docker_client
-        self.node_groups: Dict[str, NodeGroup] = {}
+        self.nodes = {}
 
-    def add_group(self, name: str, node_group: NodeGroup):
-        self.node_groups[name] = node_group
+    def new(self, name: str, tag: str, env: Dict = None, network: str = "bridge") -> Node:
+        node = Node(self.docker_client, tag, name, env, network)
+        return self.add(node)
 
-    def remove_group(self, name: str):
-        del self.node_groups[name]
+    def add(self, node: Node) -> Node:
+        self.nodes[node.name] = node
+        return node
 
-    def get_group(self, name: str) -> NodeGroup:
-        return self.node_groups[name]
+    def remove(self, name: str):
+        del self.nodes[name]
+
+    def get(self, name: str) -> Node:
+        return self.nodes[name]
