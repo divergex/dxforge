@@ -23,7 +23,7 @@ class Forge(metaclass=Singleton):
 
     def join_swarm(self, advertise_addr):
         self.logger.info("Joining swarm...")
-        join_token = self.docker_client.swarm.attrs['JoinTokens']['Worker']
+        join_token = self.docker_client.swarm.attrs.get('JoinTokens', {}).get('Worker', None)
         try:
             self.docker_client.swarm.join(remote_addrs=[advertise_addr], join_token=join_token)
         except APIError:

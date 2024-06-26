@@ -65,6 +65,8 @@ def start(delete_log=True, docker_socket="unix:///var/run/docker.sock", detach=F
         except KeyboardInterrupt:
             process.terminate()
             console.print("[yellow]Stopped...[/yellow]")
+        finally:
+            os.remove(PID_FILE)
 
 
 def stop(delete_log=False):

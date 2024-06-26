@@ -2,6 +2,7 @@ import os
 import signal
 
 import dxlib as dx
+import requests
 
 
 def signal_handler(sig, _):
@@ -22,7 +23,10 @@ def main():
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    server.start(threaded=False)
+
+    response = requests.get("http://host.docker.internal:8000/nodes/Node1/service")
+
+    print(requests.get(f"http://feed1:5000/").json())
 
 
 if __name__ == "__main__":
