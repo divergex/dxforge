@@ -1,4 +1,4 @@
-# <img src="https://github.com/divergex/dxforge/blob/main/docs/assets/forge.png" alt="dxforge icon, an anvil" width="64" height="64" /> dxforge
+# <img src="docs/_static/forge.png" alt="dxforge icon, an anvil" width="64" height="64" /> dxforge
 
 **dxforge** is the orchestration suite within the Divergex ecosystem, designed to enable seamless service discovery,
 secure communication, and containerized infrastructure management for high-performance quantitative research and trading
