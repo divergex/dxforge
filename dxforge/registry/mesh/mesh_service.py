@@ -1,24 +1,9 @@
 from dataclasses import dataclass
-from typing import List, Any, Dict, Tuple, Set
+from typing import Any, Dict, Tuple, Set
 
-from dxlib.interfaces.servers.http import HttpEndpoint
-from dxlib.interfaces.servers.server import Service
-
-
-@dataclass
-class ServiceModel:
-    name: str
-    service_id: str
-    endpoints: str
-    tags: List[str]
-
-    def to_dict(self):
-        return {
-            "service_id": self.service_id,
-            "name": self.name,
-            "endpoints": self.endpoints,
-            "tags": self.tags
-        }
+from dxlib.interfaces.services.http import HttpEndpoint
+from dxlib.interfaces.services.server import Service
+from dxlib.interfaces.services import ServiceModel
 
 
 @dataclass

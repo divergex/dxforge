@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from dxlib.interfaces.servers import Server
+from dxlib.interfaces.services import Server
 from .mesh_service import ServiceModel
 
 
@@ -24,9 +24,13 @@ class MeshInterface:
         return request.json()
 
     def register_service(self, service: ServiceModel):
-        request = httpx.post(f"{self.server.url}/services", json=service.to_dict())
-        request.raise_for_status()
-        return request.json()
+        try:
+            request = httpx.post(f"{self.server.url}/services", json=service.to_dict())
+            request.raise_for_status()
+            return request.json()
+        except httpx.ConnectError as e:
+            print("Are you sure the mesh server is running?", e)
+
 
     def search_services(self, tag: str):
         request = httpx.get(f"{self.server.url}/services/search?tag={tag}")
