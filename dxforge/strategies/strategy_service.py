@@ -6,7 +6,7 @@ from datetime import datetime
 
 import dxlib as dx
 from dxlib import History
-from dxlib.interfaces import Service, HttpEndpoint, Endpoint
+from dxlib.interfaces import Service, HttpEndpoint
 from dxlib.interfaces.internal.internal_market import MarketInterfaceInternal
 from dxlib.interfaces.services import Server, Protocols
 from dxlib.interfaces.services.http.fastapi import FastApiServer
