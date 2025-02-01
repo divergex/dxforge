@@ -1,4 +1,0 @@
-networks:
-  default:
-    name: divergex
-    external: true

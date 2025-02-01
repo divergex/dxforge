@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge Orchestrator</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+</head>
+<body>
+    <h1>Forge Orchestrator Dashboard</h1>
+
+    <h2>Containers</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Image</th>
+            <th>Ports</th>
+            <th>Actions</th>
+        </tr>
+        {% for container in containers %}
+        <tr>
+            <td>{{ container.name }}</td>
+            <td>{{ container.status }}</td>
+            <td>{{ container.image }}</td>
+            <td>{{ container.ports }}</td>
+            <td>
+                <form action="/stop" method="post">
+                    <input type="hidden" name="strategy_name" value="{{ container.name.split('_')[1] }}">
+                    <input type="hidden" name="instance_id" value="{{ container.name.split('_')[-1] }}">
+                    <button type="submit">Stop</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Available Images</h2>
+    <table>
+        <tr>
+            <th>Image Tag</th>
+            <th>Image ID</th>
+            <th>Actions</th>
+        </tr>
+        {% for image in images %}
+        <tr>
+            <td>{{ image.tags[0] if image.tags else "untagged" }}</td>
+            <td>{{ image.id }}</td>
+            <td>
+                <form action="/remove_image" method="post">
+                    <input type="hidden" name="image_id" value="{{ image.id }}">
+                    <button type="submit">Remove</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Start a New Container</h2>
+    <form action="/start" method="post">
+        <label>Strategy Name:</label>
+        <input type="text" name="strategy_name" required>
+        <label>Port:</label>
+        <input type="number" name="port" required>
+        <button type="submit">Start</button>
+    </form>
+
+    <h2>Build an Image</h2>
+    <form action="/build" method="post">
+        <label>Service Name:</label>
+        <input type="text" name="service_name" required>
+        <button type="submit">Build</button>
+    </form>
+</body>
+</html>
