@@ -6,17 +6,28 @@ from datetime import datetime
 
 from starlette.middleware.cors import CORSMiddleware
 
-import dxlib as dx
 from dxlib import History
+from dxlib.interfaces.external.yfinance.yfinance import YFinance
 from dxlib.interfaces import Service, HttpEndpoint, Server, Protocols
 from dxlib.interfaces.internal import MeshInterface, MarketInterfaceInternal
 from dxlib.interfaces.services.http.fastapi import FastApiServer
 
-class RsiStrategy(dx.Strategy):
-    def execute(self, history: History):
-        close = 200
-        close_2 = 100
-        return 100 - (100 / (1 + close / close_2))
+
+def run():
+    market_api = YFinance()
+    storage = "market_data"
+
+    symbols = ["AAPL", "MSFT", "PETR4.SA", "BBAS3.SA"]
+    start = datetime.datetime(2021, 1, 1)
+    end = datetime.datetime(2024, 12, 31)
+
+
+    strategy = ss.SignalStrategy(ss.custom.Rsi())
+    executor = Executor(strategy)
+    print("Executor")
+    benchmark = Benchmark()
+    benchmark.record("execute")
+    print(executor.run(history, ss.views.SecuritySignalView))
 
 
 class Executor(Service):

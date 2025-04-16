@@ -2,6 +2,7 @@ import logging
 import uuid
 from pathlib import Path
 from dataclasses import dataclass
+import asyncio
 
 import docker
 from docker.errors import NotFound
@@ -60,8 +61,8 @@ class Orchestrator(Service):
         """List all images matching the strategy naming pattern."""
         images = self.client.images.list()
         return [{
-            "id":    image.id,
-            "tags":  image.tags,
+            "id": image.id,
+            "tags": image.tags,
             "attrs": image.attrs,
         } for image in images if image.tags]
 
@@ -88,11 +89,11 @@ class Orchestrator(Service):
         containers = self.client.containers.list(all=True)
         service_containers = [
             {
-                "name":   container.name,
-                "id":     container.id,
-                "image":  container.image.tags[0] if container.image.tags else "unknown",
+                "name": container.name,
+                "id": container.id,
+                "image": container.image.tags[0] if container.image.tags else "unknown",
                 "status": container.status,
-                "ports":  container.ports,
+                "ports": container.ports,
             }
             for container in containers
             if container.name.startswith(f"{self.project_name}_")
@@ -176,6 +177,7 @@ class Orchestrator(Service):
         if not self.daemon:
             for service in self.services:
                 self.stop_all(service)
-            self.cleanup()
+            # run cleanup async on loop
+            asyncio.run(self.cleanup())
             self.client.close()
             print("Closed Docker client.")
