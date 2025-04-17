@@ -1,14 +1,17 @@
 import logging
 import uuid
+import asyncio
 from pathlib import Path
 from dataclasses import dataclass
-import asyncio
 
 import docker
 from docker.errors import NotFound
-from fastapi import APIRouter
+from dxlib.network.servers import HttpEndpoint
+from fastapi import APIRouter, UploadFile, File
 
-from dxlib.interfaces import Service
+from dxlib.network.services import Service
+
+from dxforge.manager import create
 
 
 @dataclass
@@ -23,40 +26,23 @@ class Orchestrator(Service):
                  project_dir: str,
                  service_id,
                  router=None,
-                 network_name="divergex",
                  daemon=False
                  ):
         super().__init__(project_name, service_id)
         self.project_name = project_name
-        self.network_name = network_name
         self.project_dir = Path(project_dir).resolve()
 
         self.client = docker.from_env()
-        self._create_network()
         self.daemon = daemon
         self.services: set = set()
 
-        self.router = router or APIRouter()
-        self._register_routes()
+        self.manager = create()
+
+        self.fastapi_router = router or APIRouter()
         self.logger = logging.getLogger(__name__)
 
-    def _register_routes(self):
-        self.router.add_api_route("/list", self.list_images, methods=["GET"])
-        self.router.add_api_route("/build", self.build_image, methods=["POST"])
-        self.router.add_api_route("/start", self.start_container, methods=["POST"])
-        self.router.add_api_route("/stop", self.stop_container, methods=["POST"])
-        self.router.add_api_route("/cleanup", self.cleanup, methods=["POST"])
-        self.router.add_api_route("/status", self.status, methods=["GET"])
-        self.router.add_api_route("/list_containers", self.list_containers, methods=["GET"])
 
-    def _create_network(self):
-        """Create a Docker network for the project if it doesn't already exist."""
-        try:
-            self.client.networks.get(self.network_name)
-        except NotFound:
-            self.client.networks.create(self.network_name, driver="bridge")
-            print(f"Created Docker network: {self.network_name}")
-
+    @HttpEndpoint.get("/list")
     async def list_images(self):
         """List all images matching the strategy naming pattern."""
         images = self.client.images.list()
@@ -66,6 +52,14 @@ class Orchestrator(Service):
             "attrs": image.attrs,
         } for image in images if image.tags]
 
+    @HttpEndpoint.post("/create")
+    # should receive an uploaded .py file
+    async def create_service(self, service_name: str, file: UploadFile = File(...)):
+        content = await file.read()
+        tag = self.manager.package(service_name, self.client, content.decode("utf-8"))
+        return tag
+
+    @HttpEndpoint.post("/build")
     async def build_image(self, service_name: str, service_tag: str = None):
         """Build a Docker image for an existing service Dockerfile."""
         service_path = self.project_dir / service_name
@@ -84,6 +78,7 @@ class Orchestrator(Service):
         )
         print(f"Built Docker image: {image_tag}")
 
+    @HttpEndpoint.get("/start")
     async def list_containers(self):
         """List all running and stopped containers for services."""
         containers = self.client.containers.list(all=True)
@@ -116,6 +111,7 @@ class Orchestrator(Service):
         container, identifier = self.start_container(service_name, start.port, start.identifier)
         return container.name, identifier
 
+    @HttpEndpoint.post("/start")
     async def start_container(self,
                               service_name: str,
                               port: int,
@@ -139,12 +135,12 @@ class Orchestrator(Service):
             detach=True,
             ports={f"{port}/tcp": None},
             name=container_name,
-            network=self.network_name,
         )
         self.services.add(service_name)
         print(f"Started container {container_name} for {service_name} on port {port}")
         return instance_identifier.__str__(), container.name
 
+    @HttpEndpoint.get("/status")
     async def status(self, service_name: str, instance_id: str):
         containers = await self.list_containers()
         container_name = f"{self.project_name}_{service_name.lower()}_{instance_id}"
@@ -153,6 +149,7 @@ class Orchestrator(Service):
                 return container["status"]
         return "Not found"
 
+    @HttpEndpoint.post("/stop")
     async def stop_container(self, service_name: str, instance_id: str):
         """Stop a running container by name."""
         try:
@@ -162,6 +159,7 @@ class Orchestrator(Service):
         except docker.errors.NotFound:
             print(f"Container {service_name} not found.")
 
+    @HttpEndpoint.post("/cleanup")
     async def cleanup(self):
         """Remove all stopped containers (that are part of the project) and dangling images."""
         containers = self.client.containers.list(all=True)

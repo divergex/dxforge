@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from dxlib.interfaces.services.http.fastapi import FastApiServer
-from dxlib.interfaces.internal import MeshService
+from dxlib.network.servers.http.fastapi import FastApiServer
+from dxlib.network.interfaces.internal import MeshService
 
 from dxforge.orchestrator import Orchestrator
 

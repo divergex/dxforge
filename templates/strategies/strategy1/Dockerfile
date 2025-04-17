@@ -6,5 +6,4 @@ WORKDIR /strategy
 COPY . /strategy
 
 
-
 ENTRYPOINT ["top", "-b"]

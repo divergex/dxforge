@@ -1,6 +1,7 @@
 import argparse
 
 from dxforge import Forge
+from dxforge.manager import MinIO
 from dxforge.ui import WebUI
 
 
@@ -27,6 +28,9 @@ def main():
 
     args = parser.parse_args()
 
+    minio = MinIO()
+    minio.start(detach=True)
+
     forge = Forge(
         project_name=args.project_name,
         project_dir=args.project_dir,
@@ -36,7 +40,14 @@ def main():
     )
     web_ui = WebUI()
     web_ui.register_routes(forge)
-    forge.run()
+
+    try:
+        forge.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        forge.stop()
+        minio.stop()
 
 
 if __name__ == "__main__":

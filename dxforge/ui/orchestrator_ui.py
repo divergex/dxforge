@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 
-from dxlib.interfaces import Service
+from dxlib.network.services import Service
 
 from dxforge.orchestrator import Orchestrator
 

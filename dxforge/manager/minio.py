@@ -1,8 +1,12 @@
-import docker
-from docker.errors import NotFound
-import logging
-from dotenv import load_dotenv
 import os
+import logging
+from typing import Literal
+
+import docker
+
+from docker.errors import NotFound
+from dotenv import load_dotenv
+
 
 class MinIO:
     def __init__(self, image_tag: str = 'minio/minio:latest', container_name: str = 'minio', env_file: str = '.env'):
@@ -37,11 +41,22 @@ class MinIO:
             self.logger.info(f"MinIO container {self.container_name} is already running.")
             return
 
+        # get copntainer if exists
+        try:
+            container = self.client.containers.get(self.container_name)
+            if container.status != 'running':
+                container.start()
+                self.logger.info(f"MinIO container {self.container_name} started.")
+                return
+        except NotFound:
+            pass
+
         try:
             self.client.containers.run(
                 self.image_tag,
                 name=self.container_name,
                 ports={"9000/tcp": 9000},
+                detach=False,
                 environment={
                     "MINIO_ACCESS_KEY": self.access_key,
                     "MINIO_SECRET_KEY": self.secret_key

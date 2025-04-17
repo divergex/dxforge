@@ -1,7 +1,6 @@
-import sys
 from urllib.parse import urlparse
 
-from dxlib import Strategy, Executor, History, Signal
+from dxlib import Strategy, Executor, History
 from dxlib.module_proxy import ModuleProxy
 from dxlib.network.interfaces.internal.oms import OrderManagementInterface
 from dxlib.network.servers import Server, Protocols
@@ -10,7 +9,6 @@ from dxlib.orders import Order
 
 
 def main(strategy_module: str, *args, **kwargs):
-    # load strategy using ModuleProxy
     mesh = MeshInterface()
     mesh.register(Server(host="127.0.0.1", port=7000, protocol=Protocols.HTTP))
 
@@ -41,14 +39,9 @@ def main(strategy_module: str, *args, **kwargs):
 
 
 if __name__ == "__main__":
-    # read args from command line, can be a list of symbols or a single symbol
-    symbols = sys.argv[1:]
-    if len(symbols) == 0:
-        raise ValueError("No symbols provided")
-    elif len(symbols) == 1:
-        symbols = symbols[0].split(",")
+    # read symbols from env
+    import os
 
-    elif len(symbols) > 1:
-        symbols = symbols[1:]
+    symbols = os.getenv("SYMBOLS")
 
     main("strategy", *symbols)
