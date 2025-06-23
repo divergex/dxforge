@@ -1,15 +1,14 @@
 import subprocess
 
 
-def log_service(service_name, lines: int = 30) -> None:
+def log_service(service_name, working_directory) -> None:
     try:
         result = subprocess.run(
-            ["journalctl", "-u", service_name, f"-n{lines}", "--no-pager"],
+            ["less", f"/var/log/{service_name}.log"],
             capture_output=True,
             text=True,
             check=True
         )
-        print(f"Last {lines} log lines for '{service_name}':\n")
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Failed to get logs for service '{service_name}':")

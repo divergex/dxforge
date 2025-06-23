@@ -51,10 +51,10 @@ class MeshService(Service):
 
     @HttpEndpoint.get("services/search")
     def search_services(self, tag: str):
-        """Search for services by tag."""
+        """Search for service by tag."""
         result = [self.service_index[(name, service_id)] for name, service_id in self.tagged.get(tag, set())]
         if not result:
-            raise Exception("No services found with the given tag")
+            raise Exception("No service found with the given tag")
         return result
 
     @HttpEndpoint.get("services/{name}")
