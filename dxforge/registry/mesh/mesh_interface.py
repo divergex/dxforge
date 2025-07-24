@@ -2,7 +2,7 @@ from typing import Any
 
 import httpx
 
-from dxlib.interfaces.servers import Server
+from dxlib.interfaces import Server
 from .mesh_service import ServiceModel
 
 

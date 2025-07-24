@@ -12,7 +12,6 @@ def process_file(project, name, filename):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Error: The file '{filename}' does not exist.")
 
-
     return path
 
 def run(script):
