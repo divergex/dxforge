@@ -1,0 +1,8 @@
+container:
+  image: dxlib:latest
+  script: /home/rzimmerdev/Workspace/dx/dxforge/examples/stat_arb/stat_arb.py
+  cpu_quota: 50000
+  mem_limit: 512m
+  readonly: true
+  network: none
+  user: nobody

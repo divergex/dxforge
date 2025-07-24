@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Any, Dict, Tuple, Set
 
-from dxlib.interfaces.servers.http import HttpEndpoint
-from dxlib.interfaces.servers.server import Service
+from dxlib.interfaces.services import Service, HttpEndpoint
 
 
 @dataclass
