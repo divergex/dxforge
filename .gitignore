@@ -1,3 +1,5 @@
 .idea
 .vscode
 *.h5
+*.sqlite
+/.state
