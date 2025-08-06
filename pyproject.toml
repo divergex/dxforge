@@ -6,9 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "dxforge"
 version = "0.1.0"
 description = "An orchestration suite for quantitative trading strategies."
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+authors = [{ name = "Rafael Zimmer", email = "rzimmerdev@gmail.com" }]
+license = "MIT"
+readme = "README.md"
 
 [project.scripts]
 mycli = "__main__:main"
