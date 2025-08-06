@@ -1,5 +1,12 @@
+.venv
 .idea
 .vscode
 *.h5
 *.sqlite
 /.state
+**/__pycache__/
+**/.cache/
+*.egg-info/
+dist/
+
+uv.lock
