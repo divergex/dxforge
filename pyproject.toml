@@ -7,7 +7,13 @@ name = "dxforge"
 version = "0.1.0"
 description = "An orchestration suite for quantitative trading strategies."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "apscheduler>=3.11.0",
+    "bcrypt>=5.0.0",
+    "docker-py>=1.10.6",
+    "pyjwt>=2.10.1",
+    "pyyaml>=6.0.3",
+]
 authors = [{ name = "Rafael Zimmer", email = "rzimmerdev@gmail.com" }]
 license = "MIT"
 readme = "README.md"

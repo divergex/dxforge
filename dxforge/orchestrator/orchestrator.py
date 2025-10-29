@@ -1,6 +1,6 @@
 from docker import from_env
 
-from dxforge.orchestrator import logs, remove, run, stop
+from orchestrator.container import stop, remove, run, logs
 from dxforge.registry.mesh import MeshInterface
 
 

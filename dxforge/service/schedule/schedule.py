@@ -2,10 +2,12 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Dict
 from starlette.responses import JSONResponse
+
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 import uuid
+
 from dxforge.orchestrator import Orchestrator
 
 router = APIRouter()
@@ -41,7 +43,7 @@ def list_strategies():
     return list(strategy_store.keys())
 
 def run_strategy_job(strategy_name: str):
-    print(f"[Scheduler] Running strategy: {strategy_name}")
+    print(f"[Scheduler] Running storage: {strategy_name}")
     orchestrator.run(strategy_store[strategy_name])
 
 @router.post("/schedule")
@@ -108,6 +110,6 @@ def stop_strategy(action: Action):
     orchestrator.stop(action.name)
 
 @router.get("/logs")
-def log_strategy(name: str = Query(..., description="Name of the strategy")):
+def log_strategy(name: str = Query(..., description="Name of the storage")):
     logs = orchestrator.logs(name)
     return logs

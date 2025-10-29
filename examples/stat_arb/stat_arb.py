@@ -11,6 +11,7 @@ from statsmodels.tsa.stattools import coint, adfuller
 from sklearn.linear_model import LinearRegression
 from dxlib.interfaces.external import yfinance
 
+
 def get_historical(symbols) -> Tuple[dx.History, dx.InstrumentStore]:
     api = yfinance.YFinance()
     api.start()
