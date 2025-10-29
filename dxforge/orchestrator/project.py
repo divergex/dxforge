@@ -22,7 +22,7 @@ class ProjectManager:
             if not owner:
                 raise ValueError("User not found")
 
-            if s.query(Project).filter_by(owner_id=owner_id, name=name).first():
+            if s.query(Project).filter_by(owner=owner_id, name=name).first():
                 raise ValueError("Project already exists")
 
             project_dir = self.base_dir / f"user_{owner_id}" / name
@@ -32,9 +32,9 @@ class ProjectManager:
             s.commit()
             return project.id
 
-    def delete_project(self, project_id: int):
+    def delete_project(self, owner_id, project_name: str):
         with self.Session() as s:
-            project = s.get(Project, project_id)
+            project = s.query(Project).filter_by(owner=owner_id, name=project_name).first()
             if not project:
                 raise ValueError("Project not found")
             try:
@@ -62,17 +62,17 @@ class ProjectManager:
             project.updated_at = datetime.now()
             s.commit()
 
-    def get_project(self, project_id: int):
+    def get_project(self, project_name: str):
         with self.Session() as s:
-            return s.get(Project, project_id)
+            return s.query(Project).filter_by(name=project_name).first()
 
     def get_projects(self, owner_id: int):
         with self.Session() as s:
-            return s.query(Project).filter_by(owner_id=owner_id).all()
+            return s.query(Project).filter_by(owner=owner_id).all()
 
     def search_projects(self, owner_id: int, tag: str = None):
         with self.Session() as s:
-            return s.query(Project).filter_by(owner_id=owner_id, tag=tag).all()
+            return s.query(Project).filter_by(owner=owner_id, tag=tag).all()
 
 if __name__ == "__main__":
     um = UserManager()

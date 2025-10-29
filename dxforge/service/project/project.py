@@ -21,13 +21,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_
     return int(user_id)
 
 
-@router.get("/list")
+@router.get("/")
 async def list_projects(uid: int = Depends(get_current_user)):
     pm = ProjectManager()
     return pm.get_projects(uid)
 
 @router.post("/")
-async def create_project(tag: Optional[str] = None, file: UploadFile = File(...), uid: int = Depends(get_current_user)):
+async def create_project(name: str, tag: Optional[str] = None, file: UploadFile = File(...), uid: int = Depends(get_current_user)):
     if not file.filename.endswith(".zip"):
         raise HTTPException(status_code=400, detail="Only .zip files are allowed")
 
@@ -38,25 +38,31 @@ async def create_project(tag: Optional[str] = None, file: UploadFile = File(...)
         buffer.write(file.file.read())
 
     pm = ProjectManager()
-    project_id = pm.create_project(uid, "myproj", tag)
+    project_id = pm.create_project(uid, name, tag)
 
-    print({
-        "project_id": project_id,
-        "user_id": uid,
-    })
     pm.upload_zip(project_id, f"/tmp/{temp_uuid}.zip")
+    return {"project_id": project_id}
 
-@router.delete("/{project_id}")
-async def delete_project(project_id: int, uid: int = Depends(get_current_user)):
+@router.delete("/{project_name}")
+async def delete_project(project_name: str, uid: int = Depends(get_current_user)):
     pm = ProjectManager()
 
-    # make sure user has rights to project
-    user_projects = pm.get_projects(uid)
-    for project in user_projects:
-        if project.id == project_id:
-            pm.delete_project(project_id)
-            # also remove from db
+    try:
+        pm.delete_project(uid, project_name)
+        return {"detail": "Project deleted"}
+    except ValueError:
+        raise HTTPException(status_code=403, detail="No project with this name was found.")
 
-            return {"detail": "Project deleted"}
 
-    raise HTTPException(status_code=403, detail="You don't have access to this project")
+from .configure import router as configure_router
+
+@router.get("/{project_name}/")
+async def get_project(project_name: str, uid: int = Depends(get_current_user)):
+    # get info about project
+    pm = ProjectManager()
+    project = pm.get_project(project_name)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+router.include_router(configure_router)
