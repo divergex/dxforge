@@ -1,7 +1,7 @@
-from sqlalchemy import Integer, Column, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
 
-from .base import Base
+from orchestrator.db._relational.base import Base
 
 class User(Base):
     __tablename__ = "users"

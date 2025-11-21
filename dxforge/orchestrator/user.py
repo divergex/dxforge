@@ -1,7 +1,7 @@
 from typing import Optional
 
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import create_engine, cast
+from sqlalchemy import create_engine
 from datetime import datetime, timedelta, timezone
 import bcrypt
 import jwt

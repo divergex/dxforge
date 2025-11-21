@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from orchestrator.project import ProjectManager
+from orchestrator.project.manager import ProjectManager
 from orchestrator.user import UserManager
 
 router = APIRouter()
