@@ -9,4 +9,9 @@
 *.egg-info/
 dist/
 
+/secrets/
+/auth/
+.env
+/var/
+
 uv.lock

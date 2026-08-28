@@ -8,25 +8,41 @@ version = "0.1.0"
 description = "An orchestration suite for quantitative trading strategies."
 requires-python = ">=3.10"
 dependencies = [
+    "alembic>=1.13.0",
     "apscheduler>=3.11.0",
     "bcrypt>=5.0.0",
     "boto3>=1.41.1",
     "boto3-stubs==1.41.1",
+    "cryptography>=42.0.0",
     "docker-py>=1.10.6",
+    "fastapi>=0.111.0",
+    "hvac>=2.0.0",
+    "httpx>=0.27.0",
     "mongomock>=4.3.0",
+    "psycopg[binary]>=3.1.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.0",
     "pyjwt>=2.10.1",
     "pytest>=9.0.1",
+    "python-multipart>=0.0.9",
     "pyyaml>=6.0.3",
+    "sqlalchemy>=2.0.30",
+    "uvicorn>=0.30.0",
 ]
 authors = [{ name = "Rafael Zimmer", email = "rzimmerdev@gmail.com" }]
 license = "MIT"
 readme = "README.md"
 
 [project.scripts]
-mycli = "__main__:main"
+mycli = "dxforge.__main__:main"
 
 [tool.setuptools]
-package-dir = { "" = "dxforge" }
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
-where = ["cli"]
+where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: requires docker compose up via a makefile setup",
+]
