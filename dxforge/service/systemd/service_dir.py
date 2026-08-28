@@ -1,1 +1,0 @@
-SERVICE_DIR = "/etc/systemd/system/"
