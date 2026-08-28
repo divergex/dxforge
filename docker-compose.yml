@@ -1,0 +1,181 @@
+name: forge
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  minio-data:
+  openbao-data:
+  registry-data:
+  registry-auth:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  postgres_app_password:
+    file: ./secrets/postgres_app_password.txt
+  minio_root_user:
+    file: ./secrets/minio_root_user.txt
+  minio_root_password:
+    file: ./secrets/minio_root_password.txt
+
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-forge}
+      POSTGRES_DB: ${POSTGRES_DB:-forge}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-forge} -d ${POSTGRES_DB:-forge}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-migrate:
+    image: python:3.12-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    secrets:
+      - postgres_password
+      - postgres_app_password
+    volumes:
+      - ./alembic.ini:/app/alembic.ini:ro,z
+      - ./src:/app/src:z
+      - ./scripts:/app/scripts:ro,z
+    working_dir: /app
+    networks:
+      - backend
+    environment:
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-forge_app}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >
+        export FORGE_MIGRATE_URL="postgresql+psycopg://${POSTGRES_USER:-forge}:$(cat /run/secrets/postgres_password)@postgres:5432/${POSTGRES_DB:-forge}"
+        && pip install --no-cache-dir -q alembic sqlalchemy 'psycopg[binary]' pydantic-settings
+        && python /app/scripts/db-prepare-role.py
+        && alembic upgrade head
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    command: server /data --console-address ":9001"
+    ports:
+      - '127.0.0.1:${MINIO_API_PORT:-9000}:9000'
+      - '127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - minio-data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # creates the tenant-code bucket + scoped service accounts & safe to re run
+  minio-bootstrap:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      APP_UID: ${APP_UID:-1000}
+      APP_GID: ${APP_GID:-1000}
+    secrets:
+      - minio_root_user
+      - minio_root_password
+    volumes:
+      - ./bootstrap/minio:/scripts:ro,z
+      - ./secrets:/secrets:z
+    networks:
+      - backend
+    entrypoint: ['/bin/sh', '/scripts/init.sh']
+
+  openbao:
+    image: openbao/openbao:latest
+    user: root
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_LOCAL_CONFIG: >
+        {"storage": {"raft": {"path": "/openbao/file/raft", "node_id": "forge-node-1"}},
+         "listener": [{"tcp": {"address": "0.0.0.0:8200", "tls_disable": true}}],
+         "api_addr": "http://openbao:8200",
+         "cluster_addr": "http://openbao:8201"}
+    command: ['/bin/sh', '-c', 'mkdir -p /openbao/file/raft && exec bao server -config=/openbao/config']
+    ports:
+      - '127.0.0.1:${OPENBAO_PORT:-8200}:8200'
+    volumes:
+      - openbao-data:/openbao/file
+    networks:
+      - backend
+    healthcheck:
+      # Exit 2 (sealed-but-reachable) still counts as "up"; unsealed is 0.
+      test: ['CMD-SHELL', 'bao status -address http://127.0.0.1:8200 >/dev/null 2>&1 || test $? -eq 2']
+
+  # writes root token + unseal keys to ./secrets, unseals it on every run, and configures the
+  # transit engine + policies + tokens. can also be re run
+  openbao-bootstrap:
+    image: openbao/openbao:latest
+    user: root
+    environment:
+      APP_UID: ${APP_UID:-1000}
+      APP_GID: ${APP_GID:-1000}
+    depends_on:
+      openbao:
+        condition: service_started
+    volumes:
+      - ./bootstrap/openbao:/scripts:ro,z
+      - ./secrets:/secrets:z
+    networks:
+      - backend
+    entrypoint: ['/bin/sh', '/scripts/init-unseal.sh']
+
+  registry:
+    image: registry:2
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: 'Forge Registry'
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+    ports:
+      - '127.0.0.1:${REGISTRY_PORT:-5001}:5000'
+    volumes:
+      - registry-data:/var/lib/registry
+      - registry-auth:/auth
+    networks:
+      - backend
+    healthcheck:
+      # Any HTTP response (incl. 401 auth challenge) means the registry container is at least
+      # up and listening
+      test: ['CMD-SHELL', 'wget -q -S --spider http://localhost:5000/v2/ 2>&1 | grep -q HTTP/']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  registry-bootstrap:
+    image: httpd:2.4-alpine
+    environment:
+      APP_UID: ${APP_UID:-1000}
+      APP_GID: ${APP_GID:-1000}
+    volumes:
+      - ./bootstrap/registry:/scripts:ro,z
+      - registry-auth:/auth
+      - ./secrets:/secrets:z
+    entrypoint: ['/bin/sh', '/scripts/init.sh']
