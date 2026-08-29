@@ -15,7 +15,9 @@ app = FastAPI()
 
 
 @app.get("/whoami")
-def whoami(context: Annotated[TenantContext, Depends(get_current_tenant)]) -> dict[str, str]:
+def whoami(
+    context: Annotated[TenantContext, Depends(get_current_tenant)],
+) -> dict[str, str]:
     return {"tenant_id": str(context.tenant.id)}
 
 
@@ -102,7 +104,7 @@ def test_session_is_scoped_to_tenant() -> None:
 
     assert client.get("/functions-count", headers=_auth(key_a)).json() == {"count": 1}
     assert client.get("/functions-count", headers=_auth(key_b)).json() == {"count": 0}
-    # Tenant B must not see tenant A's row even with the exact id.
+    # Tenant B must not see tenant A row even with the exact id.
     assert client.get(f"/function/{function_id}", headers=_auth(key_b)).json() == {
         "found": False
     }
