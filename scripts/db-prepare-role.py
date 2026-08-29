@@ -25,6 +25,8 @@ def main() -> None:
             else:
                 print(f"role {APP_USER} already exists")
 
+            # Recreated schemas lose the default PUBLIC usage grant.
+            cur.execute(f"GRANT USAGE ON SCHEMA public TO {APP_USER}")
             cur.execute(
                 f"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO {APP_USER}"
             )

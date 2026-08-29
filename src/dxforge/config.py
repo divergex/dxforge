@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     upload_dir: str = "./var/uploads"
     max_upload_bytes: int = 100 * 1024 * 1024
     max_archive_files: int = 5000
+    default_runtime: str = "python-3.11"
 
     log_max_bytes: int = 1_000_000
     keep_versions: int = 5

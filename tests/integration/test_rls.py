@@ -43,8 +43,8 @@ def test_tenant_isolation_between_contexts(engine) -> None:
         _set_tenant(conn, tenant_a)
         func_id = conn.execute(
             text(
-                "INSERT INTO functions (id, tenant_id, name, runtime) "
-                "VALUES (:id, :tid, 'a', 'python-3.11') RETURNING id"
+                "INSERT INTO functions (id, tenant_id, name) "
+                "VALUES (:id, :tid, 'a') RETURNING id"
             ),
             {"id": uuid.uuid4(), "tid": str(tenant_a)},
         ).scalar_one()

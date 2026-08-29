@@ -27,7 +27,6 @@ def create_function(
         tenant_id=context.tenant.id,
         name=body.name,
         description=body.description,
-        runtime=body.runtime,
     )
     context.session.add(function)
     context.session.commit()
@@ -61,7 +60,6 @@ def update_function(
     function = _owned(context, function_id)
     function.name = body.name
     function.description = body.description
-    function.runtime = body.runtime
     context.session.commit()
     context.session.refresh(function)
     return function

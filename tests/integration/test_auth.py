@@ -97,7 +97,7 @@ def test_session_is_scoped_to_tenant() -> None:
         _ = conn.execute(text(f"SET LOCAL app.tenant_id = '{tenant_a}'"))
         function_id = conn.execute(
             text(
-                "INSERT INTO functions (id, tenant_id, name, runtime) VALUES (:id, :tid, 'a-func', 'python-3.11') RETURNING id"
+                "INSERT INTO functions (id, tenant_id, name) VALUES (:id, :tid, 'a-func') RETURNING id"
             ),
             {"id": uuid.uuid4(), "tid": str(tenant_a)},
         ).scalar_one()

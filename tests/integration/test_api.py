@@ -70,7 +70,7 @@ def test_function_crud_roundtrip() -> None:
     headers = _auth(tenant["api_key"])
     created = _post(
         "/api/v1/functions",
-        json={"name": "nightly", "description": "d", "runtime": "python-3.11"},
+        json={"name": "nightly", "description": "d"},
         headers=headers,
     )
     assert created.status_code == 201
@@ -84,11 +84,10 @@ def test_function_crud_roundtrip() -> None:
 
     fetched = _get(f"/api/v1/functions/{function_id}", headers=headers)
     assert fetched.status_code == 200
-    assert fetched.json()["runtime"] == "python-3.11"
 
     updated = _put(
         f"/api/v1/functions/{function_id}",
-        json={"name": "nightly", "description": "updated", "runtime": "python-3.11"},
+        json={"name": "nightly", "description": "updated"},
         headers=headers,
     )
     assert updated.status_code == 200

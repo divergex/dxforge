@@ -45,7 +45,6 @@ class Function(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    runtime: Mapped[str] = mapped_column(String(64), nullable=False, default="python-3.11")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -71,6 +70,7 @@ class Version(Base):
         Uuid, ForeignKey("functions.id", ondelete="CASCADE"), nullable=False, index=True
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    runtime: Mapped[str] = mapped_column(String(64), nullable=False)
     code_object_key: Mapped[str] = mapped_column(String(512), nullable=False)
     wrapped_dek: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     key_version: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -18,7 +18,6 @@ class TenantCreated(BaseModel):
 class FunctionCreate(BaseModel):
     name: str
     description: str | None = None
-    runtime: str = "python-3.11"
 
 
 class FunctionOut(BaseModel):
@@ -27,7 +26,6 @@ class FunctionOut(BaseModel):
     id: UUID
     name: str
     description: str | None
-    runtime: str
     created_at: datetime
     updated_at: datetime
 

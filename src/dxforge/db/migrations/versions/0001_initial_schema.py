@@ -45,9 +45,6 @@ def upgrade() -> None:
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column(
-            "runtime", sa.String(64), nullable=False, server_default="python-3.11"
-        ),
-        sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
@@ -78,6 +75,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("version_number", sa.Integer(), nullable=False),
+        sa.Column("runtime", sa.String(64), nullable=False),
         sa.Column("code_object_key", sa.String(512), nullable=False),
         sa.Column("wrapped_dek", sa.LargeBinary(), nullable=False),
         sa.Column("key_version", sa.Integer(), nullable=False),
