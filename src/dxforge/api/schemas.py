@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -17,6 +17,7 @@ class TenantCreated(BaseModel):
 
 class ProjectCreate(BaseModel):
     name: str
+    build_tool: Literal["none", "make", "docker"] = "none"
 
 
 class ProjectOut(BaseModel):
@@ -24,7 +25,31 @@ class ProjectOut(BaseModel):
 
     id: UUID
     name: str
+    build_tool: str
     created_at: datetime
+
+
+class UploadOut(BaseModel):
+    file_id: str
+
+
+class CredentialCreate(BaseModel):
+    name: str
+    private_key: str
+
+
+class CredentialOut(BaseModel):
+    id: UUID
+    name: str
+
+
+class BuildRequest(BaseModel):
+    file_id: str | None = None
+    repo_url: str | None = None
+    credential_id: UUID | None = None
+    runtime: str | None = None
+    build_tool: Literal["none", "make", "docker"] | None = None
+    build_command: str | None = None
 
 
 class FunctionCreate(BaseModel):
@@ -54,5 +79,6 @@ class VersionOut(BaseModel):
     id: UUID
     version_number: int
     runtime: str
+    build_tool: str
     status: str
     created_at: datetime

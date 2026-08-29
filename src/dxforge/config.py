@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     bao_ingest_token: str = ""
     bao_exec_token: str = ""
     transit_key: str = "tenant-code"
+    credentials_transit_key: str = "git-credentials"
 
     upload_dir: str = "./var/uploads"
     max_upload_bytes: int = 100 * 1024 * 1024

@@ -44,6 +44,23 @@ class Project(Base):
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    build_tool: Mapped[str] = mapped_column(String(16), nullable=False, default="none")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class GitCredential(Base):
+    __tablename__: str = "git_credentials"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    wrapped_dek: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    key_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    ciphertext: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -91,12 +108,15 @@ class Version(Base):
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     runtime: Mapped[str] = mapped_column(String(64), nullable=False)
+    build_tool: Mapped[str] = mapped_column(String(16), nullable=False, default="none")
     code_object_key: Mapped[str] = mapped_column(String(512), nullable=False)
     wrapped_dek: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     key_version: Mapped[int] = mapped_column(Integer, nullable=False)
     source_type: Mapped[str | None] = mapped_column(String(16))
     git_repo_url: Mapped[str | None] = mapped_column(String(1024))
-    git_credential_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    git_credential_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("git_credentials.id", ondelete="SET NULL")
+    )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

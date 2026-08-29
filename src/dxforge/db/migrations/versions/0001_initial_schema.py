@@ -43,6 +43,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("build_tool", sa.String(16), nullable=False, server_default="none"),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -51,6 +52,28 @@ def upgrade() -> None:
         ),
     )
     op.create_index("ix_projects_tenant_id", "projects", ["tenant_id"])
+
+    op.create_table(
+        "git_credentials",
+        sa.Column("id", sa.Uuid(), primary_key=True),
+        sa.Column(
+            "tenant_id",
+            sa.Uuid(),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("wrapped_dek", sa.LargeBinary(), nullable=False),
+        sa.Column("key_version", sa.Integer(), nullable=False),
+        sa.Column("ciphertext", sa.LargeBinary(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+    )
+    op.create_index("ix_git_credentials_tenant_id", "git_credentials", ["tenant_id"])
 
     op.create_table(
         "versions",
@@ -69,12 +92,18 @@ def upgrade() -> None:
         ),
         sa.Column("version_number", sa.Integer(), nullable=False),
         sa.Column("runtime", sa.String(64), nullable=False),
+        sa.Column("build_tool", sa.String(16), nullable=False, server_default="none"),
         sa.Column("code_object_key", sa.String(512), nullable=False),
         sa.Column("wrapped_dek", sa.LargeBinary(), nullable=False),
         sa.Column("key_version", sa.Integer(), nullable=False),
         sa.Column("source_type", sa.String(16), nullable=True),
         sa.Column("git_repo_url", sa.String(1024), nullable=True),
-        sa.Column("git_credential_id", sa.Uuid(), nullable=True),
+        sa.Column(
+            "git_credential_id",
+            sa.Uuid(),
+            sa.ForeignKey("git_credentials.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("status", sa.String(16), nullable=False, server_default="active"),
         sa.Column(
             "created_at",
@@ -239,5 +268,6 @@ def downgrade() -> None:
     op.drop_table("schedules")
     op.drop_table("functions")
     op.drop_table("versions")
+    op.drop_table("git_credentials")
     op.drop_table("projects")
     op.drop_table("tenants")

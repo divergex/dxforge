@@ -52,3 +52,13 @@ def build_ingest_client() -> TransitClient:
 
 def build_execution_client() -> TransitClient:
     return TransitClient.from_settings(settings.bao_exec_token)
+
+
+def build_credential_client() -> TransitClient:
+    return TransitClient(
+        settings.bao_addr, settings.bao_ingest_token, settings.credentials_transit_key
+    )
+
+
+def key_version_from_wrapped(wrapped_dek: bytes) -> int:
+    return int(wrapped_dek.decode().split(":")[1].removeprefix("v"))
