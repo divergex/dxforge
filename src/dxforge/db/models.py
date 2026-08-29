@@ -36,6 +36,19 @@ class Tenant(Base):
     )
 
 
+class Project(Base):
+    __tablename__: str = "projects"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class Function(Base):
     __tablename__: str = "functions"
 
@@ -43,8 +56,15 @@ class Function(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    version_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
+    handler: Mapped[str] = mapped_column(String(512), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -59,15 +79,15 @@ class Function(Base):
 class Version(Base):
     __tablename__: str = "versions"
     __table_args__: tuple[UniqueConstraint, ...] = (
-        UniqueConstraint("function_id", "version_number", name="uq_versions_function_number"),
+        UniqueConstraint("project_id", "version_number", name="uq_versions_project_number"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=_uuid)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    function_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("functions.id", ondelete="CASCADE"), nullable=False, index=True
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     runtime: Mapped[str] = mapped_column(String(64), nullable=False)

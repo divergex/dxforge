@@ -6,9 +6,11 @@ from sqlalchemy.engine import Connection
 
 from dxforge.config import settings
 
+from tests.helpers import insert_function, insert_project, insert_version
+
 pytestmark = pytest.mark.integration
 
-TENANT_TABLES = ("functions", "versions", "schedules", "executions")
+TENANT_TABLES = ("projects", "functions", "versions", "schedules", "executions")
 
 
 @pytest.fixture(scope="module")
@@ -41,13 +43,9 @@ def test_tenant_isolation_between_contexts(engine) -> None:
         )
     with engine.begin() as conn:
         _set_tenant(conn, tenant_a)
-        func_id = conn.execute(
-            text(
-                "INSERT INTO functions (id, tenant_id, name) "
-                "VALUES (:id, :tid, 'a') RETURNING id"
-            ),
-            {"id": uuid.uuid4(), "tid": str(tenant_a)},
-        ).scalar_one()
+        project_id = insert_project(conn, tenant_a)
+        version_id = insert_version(conn, tenant_a, project_id)
+        func_id = insert_function(conn, tenant_a, project_id, version_id)
 
     with engine.begin() as conn:
         _set_tenant(conn, tenant_a)

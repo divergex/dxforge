@@ -34,7 +34,7 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "functions",
+        "projects",
         sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column(
             "tenant_id",
@@ -43,21 +43,14 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("name", sa.String(255), nullable=False),
-        sa.Column("description", sa.Text(), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
             server_default=sa.text("now()"),
             nullable=False,
         ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("now()"),
-            nullable=False,
-        ),
     )
-    op.create_index("ix_functions_tenant_id", "functions", ["tenant_id"])
+    op.create_index("ix_projects_tenant_id", "projects", ["tenant_id"])
 
     op.create_table(
         "versions",
@@ -69,9 +62,9 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "function_id",
+            "project_id",
             sa.Uuid(),
-            sa.ForeignKey("functions.id", ondelete="CASCADE"),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column("version_number", sa.Integer(), nullable=False),
@@ -90,11 +83,52 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.UniqueConstraint(
-            "function_id", "version_number", name="uq_versions_function_number"
+            "project_id", "version_number", name="uq_versions_project_number"
         ),
     )
     op.create_index("ix_versions_tenant_id", "versions", ["tenant_id"])
-    op.create_index("ix_versions_function_id", "versions", ["function_id"])
+    op.create_index("ix_versions_project_id", "versions", ["project_id"])
+
+    op.create_table(
+        "functions",
+        sa.Column("id", sa.Uuid(), primary_key=True),
+        sa.Column(
+            "tenant_id",
+            sa.Uuid(),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "project_id",
+            sa.Uuid(),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "version_id",
+            sa.Uuid(),
+            sa.ForeignKey("versions.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column("name", sa.String(255), nullable=False),
+        sa.Column("description", sa.Text(), nullable=True),
+        sa.Column("handler", sa.String(512), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+    )
+    op.create_index("ix_functions_tenant_id", "functions", ["tenant_id"])
+    op.create_index("ix_functions_project_id", "functions", ["project_id"])
+    op.create_index("ix_functions_version_id", "functions", ["version_id"])
 
     op.create_table(
         "schedules",
@@ -203,6 +237,7 @@ def downgrade() -> None:
     op.drop_table("audit_log")
     op.drop_table("executions")
     op.drop_table("schedules")
-    op.drop_table("versions")
     op.drop_table("functions")
+    op.drop_table("versions")
+    op.drop_table("projects")
     op.drop_table("tenants")

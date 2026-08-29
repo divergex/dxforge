@@ -11,6 +11,8 @@ from dxforge.auth.dependencies import TenantContext, get_current_tenant
 from dxforge.db.models import Tenant
 from dxforge.db.session import engine
 
+from tests.helpers import insert_function, insert_project, insert_version
+
 app = FastAPI()
 
 
@@ -95,12 +97,9 @@ def test_session_is_scoped_to_tenant() -> None:
     _tenant_b, key_b = _register_tenant("b")
     with engine.begin() as conn:
         _ = conn.execute(text(f"SET LOCAL app.tenant_id = '{tenant_a}'"))
-        function_id = conn.execute(
-            text(
-                "INSERT INTO functions (id, tenant_id, name) VALUES (:id, :tid, 'a-func') RETURNING id"
-            ),
-            {"id": uuid.uuid4(), "tid": str(tenant_a)},
-        ).scalar_one()
+        project_id = insert_project(conn, tenant_a)
+        version_id = insert_version(conn, tenant_a, project_id)
+        function_id = insert_function(conn, tenant_a, project_id, version_id)
 
     assert client.get("/functions-count", headers=_auth(key_a)).json() == {"count": 1}
     assert client.get("/functions-count", headers=_auth(key_b)).json() == {"count": 0}

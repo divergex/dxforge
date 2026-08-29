@@ -16,7 +16,7 @@ down_revision: str | None = "0001"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
-TENANT_TABLES = ("functions", "versions", "schedules", "executions")
+TENANT_TABLES = ("projects", "functions", "versions", "schedules", "executions")
 TENANT_CONTEXT = "current_setting('app.tenant_id', true)::uuid"
 
 

@@ -8,11 +8,11 @@ from dxforge.config import settings
 
 
 def build_key(
-    tenant_id: uuid.UUID | str, function_id: uuid.UUID | str, version: int
+    tenant_id: uuid.UUID | str, project_id: uuid.UUID | str, version: int
 ) -> str:
     tenant = uuid.UUID(str(tenant_id))
-    function = uuid.UUID(str(function_id))
-    return f"{tenant}/{function}/{version}/code.tar.gz.enc"
+    project = uuid.UUID(str(project_id))
+    return f"{tenant}/{project}/{version}/code.tar.gz.enc"
 
 
 class ObjectStore:
