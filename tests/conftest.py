@@ -24,6 +24,7 @@ def _seed_environment() -> None:
         ("FORGE_BAO_EXEC_TOKEN", "openbao_worker_token.txt"),
         ("FORGE_MINIO_INGEST_SECRET_KEY", "minio_app_server_secret.txt"),
         ("FORGE_MINIO_EXEC_SECRET_KEY", "minio_worker_secret.txt"),
+        ("FORGE_API_KEY_PEPPER", "api_key_pepper.txt"),
         ("FORGE_REGISTRY_PASSWORD", "registry_password.txt"),
     ):
         value = _read(file)

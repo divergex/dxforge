@@ -31,6 +31,11 @@ if [ ! -f secrets/postgres_app_password.txt ]; then
   echo "Generated secrets/postgres_app_password.txt"
 fi
 
+if [ ! -f secrets/api_key_pepper.txt ]; then
+  gen > secrets/api_key_pepper.txt
+  echo "Generated secrets/api_key_pepper.txt"
+fi
+
 # chmod only what is owned
 chmod 600 secrets/*.txt 2>/dev/null || true
 echo "Root secrets in ./secrets"

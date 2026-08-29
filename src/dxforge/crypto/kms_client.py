@@ -1,5 +1,5 @@
 import base64
-from typing import cast, final
+from typing import Self, cast, final
 
 import hvac
 
@@ -37,18 +37,18 @@ class TransitClient:
         )
         return SecretBytes(_decode(response, "plaintext"))
 
+    @classmethod
+    def from_settings(cls, token: str) -> Self:
+        return cls(settings.bao_addr, token, settings.transit_key)
+
 
 def _decode(payload: _Payload, key: str) -> bytes:
     return base64.b64decode(payload["data"][key])
 
 
 def build_ingest_client() -> TransitClient:
-    return TransitClient(
-        settings.bao_addr, settings.bao_ingest_token, settings.transit_key
-    )
+    return TransitClient.from_settings(settings.bao_ingest_token)
 
 
 def build_execution_client() -> TransitClient:
-    return TransitClient(
-        settings.bao_addr, settings.bao_exec_token, settings.transit_key
-    )
+    return TransitClient.from_settings(settings.bao_exec_token)

@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     log_max_bytes: int = 1_000_000
     keep_versions: int = 5
 
+    # Global salt mixed into tenant API-key hashes (see auth/api_keys.py).
+    api_key_pepper: str = ""
+
     impersonation_ttl_minutes: int = 15
 
 
