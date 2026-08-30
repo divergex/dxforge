@@ -5,12 +5,13 @@ from fastapi.responses import JSONResponse
 
 from dxforge.api.routers import (
     credentials,
+    executions,
     functions,
     health,
     projects,
+    schedules,
     tenants,
     upload,
-    versions,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,10 @@ def create_app(version: str, api_prefix: str = "/api/v1") -> FastAPI:
         tenants.router,
         projects.router,
         functions.router,
-        versions.router,
         upload.router,
         credentials.router,
+        schedules.router,
+        executions.router,
         health.router,
     ):
         app.include_router(router, prefix=api_prefix)

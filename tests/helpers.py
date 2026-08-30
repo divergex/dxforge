@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from sqlalchemy import text
@@ -40,12 +41,12 @@ def insert_function(
     project_id: uuid.UUID,
     version_id: uuid.UUID,
     name: str = "f",
-    handler: str = "main.py",
+    command: list[str] | None = None,
 ) -> uuid.UUID:
     return uuid.UUID(str(conn.execute(
         text(
-            "INSERT INTO functions (id, tenant_id, project_id, version_id, name, handler) "
-            "VALUES (:id, :tid, :pid, :vid, :name, :handler) RETURNING id"
+            "INSERT INTO functions (id, tenant_id, project_id, version_id, name, command) "
+            "VALUES (:id, :tid, :pid, :vid, :name, CAST(:command AS json)) RETURNING id"
         ),
         {
             "id": uuid.uuid4(),
@@ -53,7 +54,7 @@ def insert_function(
             "pid": str(project_id),
             "vid": str(version_id),
             "name": name,
-            "handler": handler,
+            "command": json.dumps(command or ["python", "main.py"]),
         },
     ).scalar_one()))
 

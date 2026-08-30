@@ -21,7 +21,7 @@ trap on_error ERR
 
 step "docker" "Checking Docker daemon..."
 docker info >/dev/null 2>&1 || {
-  echo "!!! Docker daemon is not running — start it and re-run 'make setup'."
+  echo "!!! Docker daemon is not running. Start it and re-run 'make setup'."
   exit 1
 }
 

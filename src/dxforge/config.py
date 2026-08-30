@@ -35,6 +35,7 @@ class Settings(BaseSettings):
 
     log_max_bytes: int = 1_000_000
     keep_versions: int = 5
+    execution_timeout_seconds: int = 300
 
     # Global salt mixed into tenant API-key hashes (see auth/api_keys.py).
     api_key_pepper: str = ""

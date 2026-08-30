@@ -46,7 +46,7 @@ def _function_payload(project_id: str, version_id: str, **overrides: object) -> 
         "name": "nightly",
         "project_id": project_id,
         "version_id": version_id,
-        "handler": "main.py",
+        "command": ["python", "main.py"],
         "description": "d",
     }
     payload.update(overrides)
@@ -110,7 +110,7 @@ def test_function_crud_roundtrip() -> None:
     body = created.json()
     assert body["name"] == "nightly"
     assert body["description"] == "d"
-    assert body["handler"] == "main.py"
+    assert body["command"] == ["python", "main.py"]
     assert body["project_id"] == str(project_id)
     assert body["version_id"] == str(version_id)
     function_id = body["id"]
@@ -120,16 +120,18 @@ def test_function_crud_roundtrip() -> None:
 
     fetched = _get(f"/api/v1/functions/{function_id}", headers=headers)
     assert fetched.status_code == 200
-    assert fetched.json()["handler"] == "main.py"
+    assert fetched.json()["command"] == ["python", "main.py"]
 
     updated = _put(
         f"/api/v1/functions/{function_id}",
-        json=_function_payload(str(project_id), str(version_id), description="updated", handler="train.py"),
+        json=_function_payload(
+            str(project_id), str(version_id), description="updated", command=["python", "train.py"]
+        ),
         headers=headers,
     )
     assert updated.status_code == 200
     assert updated.json()["description"] == "updated"
-    assert updated.json()["handler"] == "train.py"
+    assert updated.json()["command"] == ["python", "train.py"]
 
     assert _delete(f"/api/v1/functions/{function_id}", headers=headers).status_code == 204
     assert _get(f"/api/v1/functions/{function_id}", headers=headers).status_code == 404

@@ -56,7 +56,7 @@ class FunctionCreate(BaseModel):
     name: str
     project_id: UUID
     version_id: UUID
-    handler: str
+    command: list[str]
     description: str | None = None
 
 
@@ -68,7 +68,7 @@ class FunctionOut(BaseModel):
     description: str | None
     project_id: UUID
     version_id: UUID
-    handler: str
+    command: list[str]
     created_at: datetime
     updated_at: datetime
 
@@ -82,3 +82,46 @@ class VersionOut(BaseModel):
     build_tool: str
     status: str
     created_at: datetime
+
+
+class ScheduleCreate(BaseModel):
+    function_id: UUID
+    version_id: UUID | None = None
+    rule: str
+    enabled: bool = True
+    executor_backend: str = "docker"
+
+
+class ScheduleOut(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
+
+    id: UUID
+    function_id: UUID
+    version_id: UUID | None
+    rule: str
+    enabled: bool
+    executor_backend: str
+    last_fired_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ExecutionOut(BaseModel):
+    model_config: ClassVar[ConfigDict] = ConfigDict(from_attributes=True)
+
+    id: UUID
+    schedule_id: UUID | None
+    function_id: UUID
+    version_id: UUID
+    status: str
+    executor_backend: str
+    exit_code: int | None
+    started_at: datetime
+    finished_at: datetime | None
+    duration_seconds: float | None
+
+
+class ExecutionLogsOut(BaseModel):
+    execution_id: UUID
+    stdout: str
+    stderr: str

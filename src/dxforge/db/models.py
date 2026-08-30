@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     Float,
@@ -81,7 +82,7 @@ class Function(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    handler: Mapped[str] = mapped_column(String(512), nullable=False)
+    command: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -138,6 +139,9 @@ class Schedule(Base):
     )
     rule: Mapped[str] = mapped_column(String(512), nullable=False)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    executor_backend: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="docker"
+    )
     last_fired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -167,6 +171,9 @@ class Execution(Base):
         Uuid, ForeignKey("versions.id", ondelete="CASCADE"), nullable=False, index=True
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")
+    executor_backend: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="docker"
+    )
     exit_code: Mapped[int | None] = mapped_column(Integer)
     stdout: Mapped[str] = mapped_column(Text, nullable=False, default="")
     stderr: Mapped[str] = mapped_column(Text, nullable=False, default="")

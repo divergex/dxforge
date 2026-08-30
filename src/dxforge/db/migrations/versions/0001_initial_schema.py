@@ -141,7 +141,7 @@ def upgrade() -> None:
         ),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("handler", sa.String(512), nullable=False),
+        sa.Column("command", sa.JSON(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),
@@ -181,6 +181,12 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("rule", sa.String(512), nullable=False),
+        sa.Column(
+            "executor_backend",
+            sa.String(32),
+            nullable=False,
+            server_default=sa.text("'docker'"),
+        ),
         sa.Column(
             "enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")
         ),
@@ -229,6 +235,12 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("status", sa.String(16), nullable=False, server_default="running"),
+        sa.Column(
+            "executor_backend",
+            sa.String(32),
+            nullable=False,
+            server_default=sa.text("'docker'"),
+        ),
         sa.Column("exit_code", sa.Integer(), nullable=True),
         sa.Column("stdout", sa.Text(), nullable=False, server_default=""),
         sa.Column("stderr", sa.Text(), nullable=False, server_default=""),

@@ -18,6 +18,15 @@ def _owned(context: TenantContext, function_id: UUID) -> Function:
     return function
 
 
+def _validate_command(command: list[str]) -> None:
+    if not command or len(command) > 64:
+        raise HTTPException(status_code=422, detail="command must be 1-64 arguments")
+    if sum(len(arg) for arg in command) > 4096:
+        raise HTTPException(status_code=422, detail="command too long")
+    if any(not arg or "\x00" in arg for arg in command):
+        raise HTTPException(status_code=422, detail="command arguments must be non-empty")
+
+
 def _pinned_version(context: TenantContext, body: FunctionCreate) -> Version:
     if context.session.get(Project, body.project_id) is None:
         raise HTTPException(status_code=404, detail="project not found")
@@ -33,13 +42,14 @@ def create_function(
     context: Annotated[TenantContext, Depends(get_current_tenant)],
 ) -> Function:
     _pinned_version(context, body)
+    _validate_command(body.command)
     function = Function(
         tenant_id=context.tenant.id,
         project_id=body.project_id,
         version_id=body.version_id,
         name=body.name,
         description=body.description,
-        handler=body.handler,
+        command=body.command,
     )
     context.session.add(function)
     context.session.commit()
@@ -72,11 +82,12 @@ def update_function(
 ) -> Function:
     function = _owned(context, function_id)
     _pinned_version(context, body)
+    _validate_command(body.command)
     function.project_id = body.project_id
     function.version_id = body.version_id
     function.name = body.name
     function.description = body.description
-    function.handler = body.handler
+    function.command = body.command
     context.session.commit()
     context.session.refresh(function)
     return function
