@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 
-SECRETS_DIR = Path(__file__).resolve().parent.parent / "secrets"
+ROOT = Path(__file__).resolve().parent.parent
+SECRETS_DIR = Path(os.environ.get("FORGE_STACK_DIR", ROOT / ".stack")) / "secrets"
 
 
 def _read(name: str) -> str | None:

@@ -11,25 +11,17 @@ volumes:
   registry-data:
   registry-auth:
 
-secrets:
-  postgres_password:
-    file: ./secrets/postgres_password.txt
-  postgres_app_password:
-    file: ./secrets/postgres_app_password.txt
-  minio_root_user:
-    file: ./secrets/minio_root_user.txt
-  minio_root_password:
-    file: ./secrets/minio_root_password.txt
+# credentials come from secrets/compose.env, which forge derives from ./secrets on
+# every invocation; a .env here overrides
 
 services:
   postgres:
-    image: postgres:14
+    #   docker buildx imagetools inspect postgres:14.24 --format '{{.Manifest.Digest}}'
+    image: postgres:14.24@sha256:14bfab572eec6abf65892e1db7c3ba8d41b2a2855c1b143664907d6e146eb6e1
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-forge}
       POSTGRES_DB: ${POSTGRES_DB:-forge}
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-    secrets:
-      - postgres_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run forge init first}
     ports:
       - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
@@ -42,39 +34,11 @@ services:
       timeout: 5s
       retries: 10
 
-  db-migrate:
-    image: python:3.12-slim
-    depends_on:
-      postgres:
-        condition: service_healthy
-    secrets:
-      - postgres_password
-      - postgres_app_password
-    volumes:
-      - ./alembic.ini:/app/alembic.ini:ro,z
-      - ./src:/app/src:z
-      - ./scripts:/app/scripts:ro,z
-    working_dir: /app
-    networks:
-      - backend
-    environment:
-      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-forge_app}
-    entrypoint: ['/bin/sh', '-c']
-    command:
-      - >
-        export FORGE_MIGRATE_URL="postgresql+psycopg://${POSTGRES_USER:-forge}:$(cat /run/secrets/postgres_password)@postgres:5432/${POSTGRES_DB:-forge}"
-        && pip install --no-cache-dir -q alembic sqlalchemy 'psycopg[binary]' pydantic-settings
-        && python /app/scripts/db-prepare-role.py
-        && alembic upgrade head
-
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio@sha256:25bc63a89475bc494bfbce9bbeddb0421aece3f3968d77c809db5104d07b4545
     environment:
-      MINIO_ROOT_USER_FILE: /run/secrets/minio_root_user
-      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
-    secrets:
-      - minio_root_user
-      - minio_root_password
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?run forge init first}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?run forge init first}
     command: server /data --console-address ":9001"
     ports:
       - '127.0.0.1:${MINIO_API_PORT:-9000}:9000'
@@ -83,24 +47,19 @@ services:
       - minio-data:/data
     networks:
       - backend
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    # The Chainguard image ships no shell or HTTP client, so it cannot carry a
+    # CMD-SHELL healthcheck. minio-bootstrap polls the health endpoint instead.
 
   # creates the tenant-code bucket + scoped service accounts & safe to re run
   minio-bootstrap:
-    image: minio/mc:latest
+    image: @@DXFORGE_IMAGE@@
     depends_on:
-      minio:
-        condition: service_healthy
+      - minio
     environment:
       APP_UID: ${APP_UID:-1000}
       APP_GID: ${APP_GID:-1000}
-    secrets:
-      - minio_root_user
-      - minio_root_password
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?run forge init first}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?run forge init first}
     volumes:
       - ./bootstrap/minio:/scripts:ro,z
       - ./secrets:/secrets:z
@@ -109,7 +68,7 @@ services:
     entrypoint: ['/bin/sh', '/scripts/init.sh']
 
   openbao:
-    image: openbao/openbao:latest
+    image: openbao/openbao:2.7.1@sha256:6d2b93856e3fcf7b18ad855a0b51eaba474dc8b79cf554379ea32034797d2acf
     user: root
     cap_add:
       - IPC_LOCK
@@ -133,7 +92,7 @@ services:
   # writes root token + unseal keys to ./secrets, unseals it on every run, and configures the
   # transit engine + policies + tokens. can also be re run
   openbao-bootstrap:
-    image: openbao/openbao:latest
+    image: openbao/openbao:2.7.1@sha256:6d2b93856e3fcf7b18ad855a0b51eaba474dc8b79cf554379ea32034797d2acf
     user: root
     environment:
       APP_UID: ${APP_UID:-1000}
@@ -149,7 +108,7 @@ services:
     entrypoint: ['/bin/sh', '/scripts/init-unseal.sh']
 
   registry:
-    image: registry:2
+    image: registry:2.8.3@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373
     environment:
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: 'Forge Registry'
@@ -170,7 +129,7 @@ services:
       retries: 10
 
   registry-bootstrap:
-    image: httpd:2.4-alpine
+    image: httpd:2.4.69-alpine@sha256:3440c39d8d6f54fa9ad2549e5a60c19ddd435faadc29c1ad28aa795f71888889
     environment:
       APP_UID: ${APP_UID:-1000}
       APP_GID: ${APP_GID:-1000}
@@ -179,3 +138,37 @@ services:
       - registry-auth:/auth
       - ./secrets:/secrets:z
     entrypoint: ['/bin/sh', '/scripts/init.sh']
+
+  # creates/updates the RLS-scoped application role, then applies migrations. Both run
+  # the published dxforge image, so no checkout is needed on the host.
+  db-prepare-role:
+    image: @@DXFORGE_IMAGE@@
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      FORGE_STACK_DIR: /stack
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER:-forge_app}
+      FORGE_MIGRATE_URL: postgresql+psycopg://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:?run forge init first}@postgres:5432/${POSTGRES_DB:-forge}
+      FORGE_DATABASE_URL: postgresql+psycopg://${POSTGRES_APP_USER:-forge_app}:${POSTGRES_APP_PASSWORD:?run forge init first}@postgres:5432/${POSTGRES_DB:-forge}
+    volumes:
+      - ./:/stack:ro,z
+    networks:
+      - backend
+    command: ['db', 'prepare-role']
+
+  db-migrate:
+    image: @@DXFORGE_IMAGE@@
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-prepare-role:
+        condition: service_completed_successfully
+    environment:
+      FORGE_STACK_DIR: /stack
+      FORGE_MIGRATE_URL: postgresql+psycopg://${POSTGRES_USER:-forge}:${POSTGRES_PASSWORD:?run forge init first}@postgres:5432/${POSTGRES_DB:-forge}
+    volumes:
+      - ./:/stack:ro,z
+    networks:
+      - backend
+    command: ['migrate']

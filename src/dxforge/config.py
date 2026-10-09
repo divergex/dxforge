@@ -9,9 +9,6 @@ class Settings(BaseSettings):
         env_prefix="FORGE_", env_file=".env", extra="ignore"
     )
 
-    # Application role is RLS-scoped, non-superuser
-
-    # These can/should be overwritten in .env file or environment variables
     database_url: str = "postgresql+psycopg://forge_app:forge_app@127.0.0.1:5432/forge"
 
     minio_endpoint: str = "127.0.0.1:9000"

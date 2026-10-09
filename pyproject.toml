@@ -14,7 +14,7 @@ dependencies = [
     "boto3>=1.41.1",
     "boto3-stubs==1.41.1",
     "cryptography>=42.0.0",
-    "docker-py>=1.10.6",
+    "docker>=7.1.0",
     "fastapi>=0.111.0",
     "hvac>=2.0.0",
     "httpx>=0.27.0",
@@ -42,6 +42,19 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# the compose template ships inside the wheel so `forge init` can render it; the
+# patterns are explicit because globs pull in __pycache__ and other build leftovers
+[tool.setuptools.package-data]
+"dxforge.stack" = [
+    ".env.example",
+    "docker-compose.yml.tmpl",
+    "bootstrap/minio/init.sh",
+    "bootstrap/minio/policies/*.json",
+    "bootstrap/openbao/init-unseal.sh",
+    "bootstrap/registry/init.sh",
+]
+"dxforge.db.migrations" = ["script.py.mako"]
 
 [tool.pytest.ini_options]
 markers = [
