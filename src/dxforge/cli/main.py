@@ -149,7 +149,7 @@ def _print_schedules() -> None:
                         tenant_name,
                         str(schedule.id)[:8],
                         function.name if function is not None else "?",
-                        schedule.rule,
+                        schedule.rule if schedule.rule is not None else "once",
                         "on" if schedule.enabled else "off",
                         schedule.executor_backend,
                         schedule.last_fired_at.isoformat(timespec="minutes")

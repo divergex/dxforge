@@ -83,6 +83,14 @@ class Function(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     command: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    # Liveness: GET health_url (loopback only); no healthy answer for
+    # alive_timeout_seconds (counted from process start) kills the process.
+    health_url: Mapped[str | None] = mapped_column(String(1024))
+    alive_timeout_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="30"
+    )
+    # None = never killed on elapsed time.
+    hard_timeout_seconds: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -137,11 +145,14 @@ class Schedule(Base):
     version_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("versions.id", ondelete="SET NULL")
     )
-    rule: Mapped[str] = mapped_column(String(512), nullable=False)
+    # Repeat cycle; None = run once (at trigger_at) and never again.
+    rule: Mapped[str | None] = mapped_column(String(512))
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     executor_backend: Mapped[str] = mapped_column(
-        String(32), nullable=False, server_default="docker"
+        String(32), nullable=False, server_default="host"
     )
+    # One-shot trigger: set to the submit/update time, cleared when fired.
+    trigger_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_fired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -172,7 +183,7 @@ class Execution(Base):
     )
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")
     executor_backend: Mapped[str] = mapped_column(
-        String(32), nullable=False, server_default="docker"
+        String(32), nullable=False, server_default="host"
     )
     exit_code: Mapped[int | None] = mapped_column(Integer)
     stdout: Mapped[str] = mapped_column(Text, nullable=False, default="")
@@ -182,6 +193,13 @@ class Execution(Base):
     )
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     duration_seconds: Mapped[float | None] = mapped_column(Float)
+    # Supervisor process owning this execution (see executor/supervisor.py).
+    supervisor_pid: Mapped[int | None] = mapped_column(Integer)
+    pid: Mapped[int | None] = mapped_column(Integer)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stop_requested: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
 
 
 class AuditLog(Base):

@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import ClassVar, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from dxforge.config import settings
 
 
 class TenantCreate(BaseModel):
@@ -58,6 +60,13 @@ class FunctionCreate(BaseModel):
     version_id: UUID
     command: list[str]
     description: str | None = None
+    # Loopback URL polled for liveness; no 2xx for alive_timeout_seconds kills the run.
+    health_url: str | None = None
+    alive_timeout_seconds: int = Field(default=30, ge=1)
+    # Kill after this many seconds regardless of health; null = never.
+    hard_timeout_seconds: int | None = Field(
+        default_factory=lambda: settings.execution_timeout_seconds, ge=1
+    )
 
 
 class FunctionOut(BaseModel):
@@ -69,6 +78,9 @@ class FunctionOut(BaseModel):
     project_id: UUID
     version_id: UUID
     command: list[str]
+    health_url: str | None
+    alive_timeout_seconds: int
+    hard_timeout_seconds: int | None
     created_at: datetime
     updated_at: datetime
 
@@ -87,9 +99,10 @@ class VersionOut(BaseModel):
 class ScheduleCreate(BaseModel):
     function_id: UUID
     version_id: UUID | None = None
-    rule: str
+    # Repeat cycle (see scheduler/cron.py); null = run once, at submit/update time.
+    rule: str | None = None
     enabled: bool = True
-    executor_backend: str = "docker"
+    executor_backend: str = "host"
 
 
 class ScheduleOut(BaseModel):
@@ -98,10 +111,11 @@ class ScheduleOut(BaseModel):
     id: UUID
     function_id: UUID
     version_id: UUID | None
-    rule: str
+    rule: str | None
     enabled: bool
     executor_backend: str
     last_fired_at: datetime | None
+    trigger_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -119,6 +133,8 @@ class ExecutionOut(BaseModel):
     started_at: datetime
     finished_at: datetime | None
     duration_seconds: float | None
+    heartbeat_at: datetime | None
+    stop_requested: bool
 
 
 class ExecutionLogsOut(BaseModel):

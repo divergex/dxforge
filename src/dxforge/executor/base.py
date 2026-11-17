@@ -14,6 +14,6 @@ class ExecutionResult:
 
 class Executor:
     def run(
-        self, _artifact: Path, _version: Version, command: list[str], _timeout_seconds: int
+        self, _artifact: Path, _version: Version, command: list[str], _timeout_seconds: int | None
     ) -> ExecutionResult:
         raise NotImplementedError

@@ -91,6 +91,27 @@ Start the api and access it at `http://localhost:8000` with
 forge api run
 ```
 
+### Running code and long-lived services
+
+Code runs as a host process (`executor_backend: "host"`, the default). Upload a zip, build a version,
+create a function, then submit a schedule (`POST /api/v1/schedules`); a worker (`forge worker start`) starts it.
+
+- **Schedules**: `trigger_at` is set to the submit (or update) time, so the schedule fires as soon as the worker
+  sees it; the worker is woken immediately through Postgres `NOTIFY`, no waiting for the poll interval.
+  `rule: null` means run once and never again; with a `rule` (`{"every": ...}` / `{"dates": ...}`) it repeats
+  after that first run. To run again, `PUT` the schedule: any update re-arms it.
+- **Timeouts** (per function): `hard_timeout_seconds` kills the process after that long regardless (`null` = never;
+  default 300). `health_url` (loopback only) is polled every few seconds; if it does not answer 2xx for
+  `alive_timeout_seconds` (counted from process start) the process is killed with status `unhealthy`.
+- **Decoupled execution**: each execution gets its own detached supervisor process that owns the program,
+  its logs, heartbeat and timeouts. Stopping the API or the worker does not stop running programs; a restarted
+  worker adopts them, and closes ones whose supervisor died as `lost`.
+- **Observe / stop**: `GET /executions/{id}`, `GET /executions/{id}/logs` (live while running),
+  `POST /executions/{id}/stop`. Statuses: `running`, `success`, `failed`, `timeout`, `unhealthy`, `stopped`, `lost`.
+
+Host processes run on the dxforge host with its network. Supervisors read their state from
+`FORGE_EXECUTION_DIR` (default `./var/executions`), which API and workers must share.
+
 ## Contributing
 
 If you'd like to contribute to the development of **dxforge**, see the [CONTRIBUTING](CONTRIBUTING.md) guidelines for details on how to get started.

@@ -1,4 +1,5 @@
 from typing import Annotated
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -27,6 +28,25 @@ def _validate_command(command: list[str]) -> None:
         raise HTTPException(status_code=422, detail="command arguments must be non-empty")
 
 
+_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _validate_health_url(health_url: str | None) -> None:
+    """Probes run on the dxforge host, so only loopback targets are allowed."""
+    if health_url is None:
+        return
+    try:
+        parsed = urlsplit(health_url)
+        _ = parsed.port
+    except ValueError:
+        raise HTTPException(status_code=422, detail="health_url is not a valid URL")
+    if parsed.scheme not in ("http", "https") or parsed.hostname not in _LOOPBACK_HOSTS:
+        raise HTTPException(
+            status_code=422,
+            detail="health_url must be an http(s) URL on localhost, 127.0.0.1 or ::1",
+        )
+
+
 def _pinned_version(context: TenantContext, body: FunctionCreate) -> Version:
     if context.session.get(Project, body.project_id) is None:
         raise HTTPException(status_code=404, detail="project not found")
@@ -43,6 +63,7 @@ def create_function(
 ) -> Function:
     _pinned_version(context, body)
     _validate_command(body.command)
+    _validate_health_url(body.health_url)
     function = Function(
         tenant_id=context.tenant.id,
         project_id=body.project_id,
@@ -50,6 +71,9 @@ def create_function(
         name=body.name,
         description=body.description,
         command=body.command,
+        health_url=body.health_url,
+        alive_timeout_seconds=body.alive_timeout_seconds,
+        hard_timeout_seconds=body.hard_timeout_seconds,
     )
     context.session.add(function)
     context.session.commit()
@@ -83,11 +107,15 @@ def update_function(
     function = _owned(context, function_id)
     _pinned_version(context, body)
     _validate_command(body.command)
+    _validate_health_url(body.health_url)
     function.project_id = body.project_id
     function.version_id = body.version_id
     function.name = body.name
     function.description = body.description
     function.command = body.command
+    function.health_url = body.health_url
+    function.alive_timeout_seconds = body.alive_timeout_seconds
+    function.hard_timeout_seconds = body.hard_timeout_seconds
     context.session.commit()
     context.session.refresh(function)
     return function

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import ClassVar
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,7 +36,17 @@ class Settings(BaseSettings):
 
     log_max_bytes: int = 1_000_000
     keep_versions: int = 5
+
+    # Default hard timeout offered to new functions; a function may set None (never).
     execution_timeout_seconds: int = 300
+
+    # Host-process supervision. Runtime state of live executions (logs, code) is
+    # kept under execution_dir, which must be readable by both API and supervisors.
+    execution_dir: str = str(Path(__file__).resolve().parents[2] / "var" / "executions")
+    supervisor_heartbeat_seconds: float = 5.0
+    supervisor_stale_seconds: float = 60.0
+    health_check_interval_seconds: float = 5.0
+    stop_grace_seconds: float = 10.0
 
     # Global salt mixed into tenant API-key hashes (see auth/api_keys.py).
     api_key_pepper: str = ""

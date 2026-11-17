@@ -20,7 +20,7 @@ RUNTIME_IMAGES = {
 class DockerExecutor(Executor):
     @override
     def run(
-        self, artifact: Path, version: Version, command: list[str], timeout_seconds: int
+        self, artifact: Path, version: Version, command: list[str], timeout_seconds: int | None
     ) -> ExecutionResult:
         client = docker.from_env()
         code_dir: Path | None = None
