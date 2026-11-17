@@ -10,8 +10,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TypedDict, cast
 
-WORKERS_DIR = Path(__file__).resolve().parents[3] / "var" / "workers"
-_REPO_ROOT = WORKERS_DIR.parents[1]
+from dxforge.stack import STACK_ENV
+
+WORKERS_SUBDIR = Path("var") / "workers"
+
+
+def workers_dir(root: Path) -> Path:
+    return root / WORKERS_SUBDIR
 
 
 class _WorkerRecord(TypedDict):
@@ -40,8 +45,10 @@ def _alive(pid: int) -> bool:
     return True
 
 
-def _write(info: WorkerInfo) -> None:
-    _ = (WORKERS_DIR / f"{info.worker_id}.json").write_text(
+def _write(root: Path, info: WorkerInfo) -> None:
+    directory = workers_dir(root)
+    directory.mkdir(parents=True, exist_ok=True)
+    _ = (directory / f"{info.worker_id}.json").write_text(
         json.dumps(
             {
                 "worker_id": info.worker_id,
@@ -53,16 +60,19 @@ def _write(info: WorkerInfo) -> None:
     )
 
 
-def start(interval: float) -> WorkerInfo:
+def start(root: Path, interval: float) -> WorkerInfo:
     """Spawn a detached scheduler worker and register it in var/workers/."""
-    WORKERS_DIR.mkdir(parents=True, exist_ok=True)
-    existing = [w for w in list_workers() if w.status == "running"]
+    directory = workers_dir(root)
+    directory.mkdir(parents=True, exist_ok=True)
+    existing = [w for w in list_workers(root) if w.status == "running"]
     if existing:
         message = f"worker {existing[0].worker_id} (pid {existing[0].pid}) is already running. "
         message += "Stop it first. Without leader election two workers would double-fire schedules"
         raise RuntimeError(message)
     worker_id = uuid.uuid4().hex[:8]
-    log_path = WORKERS_DIR / f"{worker_id}.log"
+    log_path = directory / f"{worker_id}.log"
+    env = dict(os.environ)
+    env[STACK_ENV] = str(root)
     with log_path.open("wb") as log:
         process = subprocess.Popen(
             [
@@ -72,8 +82,11 @@ def start(interval: float) -> WorkerInfo:
                 "worker-run",
                 "--interval",
                 str(interval),
+                "--dir",
+                str(root),
             ],
-            cwd=_REPO_ROOT,
+            cwd=root,
+            env=env,
             start_new_session=True,
             stdout=log,
             stderr=log,
@@ -81,10 +94,8 @@ def start(interval: float) -> WorkerInfo:
     time.sleep(0.5)
     if not _alive(process.pid):
         raise RuntimeError(f"worker exited immediately; see {log_path}")
-    info = WorkerInfo(
-        worker_id, process.pid, _now(), interval, "running"
-    )
-    _write(info)
+    info = WorkerInfo(worker_id, process.pid, _now(), interval, "running")
+    _write(root, info)
     return info
 
 
@@ -100,14 +111,15 @@ def _read(info_path: Path) -> WorkerInfo:
     )
 
 
-def list_workers() -> list[WorkerInfo]:
-    if not WORKERS_DIR.exists():
+def list_workers(root: Path) -> list[WorkerInfo]:
+    directory = workers_dir(root)
+    if not directory.exists():
         return []
-    return [_read(path) for path in sorted(WORKERS_DIR.glob("*.json"))]
+    return [_read(path) for path in sorted(directory.glob("*.json"))]
 
 
-def stop(worker_id: str) -> WorkerInfo | None:
-    path = WORKERS_DIR / f"{worker_id}.json"
+def stop(root: Path, worker_id: str) -> WorkerInfo | None:
+    path = workers_dir(root) / f"{worker_id}.json"
     if not path.exists():
         return None
     info = _read(path)

@@ -1,0 +1,15 @@
+.git
+.github
+.stack
+secrets
+var
+.auth
+.env
+.venv
+**/__pycache__
+*.egg-info
+dist
+build
+tests
+docs
+.DS_Store

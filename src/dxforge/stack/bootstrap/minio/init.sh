@@ -5,8 +5,8 @@
 #   - root credentials should only used here
 set -e
 
-MINIO_ROOT_USER=$(cat /run/secrets/minio_root_user)
-MINIO_ROOT_PASSWORD=$(cat /run/secrets/minio_root_password)
+MINIO_ROOT_USER="${MINIO_ROOT_USER:?MINIO_ROOT_USER not set}"
+MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD not set}"
 export MC_HOST_local="http://${MINIO_ROOT_USER}:${MINIO_ROOT_PASSWORD}@minio:9000"
 
 echo "[minio-bootstrap] Waiting for MinIO..."

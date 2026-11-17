@@ -13,5 +13,6 @@ dist/
 /auth/
 .env
 /var/
+/.stack/
 
 uv.lock
